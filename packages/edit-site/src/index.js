@@ -25,9 +25,9 @@ import { addFilter } from '@wordpress/hooks';
  */
 import './hooks';
 import { store as editSiteStore } from './store';
-import EditSiteApp from './components/app';
 import getIsListPage from './utils/get-is-list-page';
 import ErrorBoundaryWarning from './components/error-boundary/warning';
+import App from './components/app';
 
 /**
  * Reinitializes the editor after the user chooses to reboot the editor after
@@ -132,13 +132,7 @@ export function reinitializeEditor( target, settings ) {
 	window.addEventListener( 'dragover', ( e ) => e.preventDefault(), false );
 	window.addEventListener( 'drop', ( e ) => e.preventDefault(), false );
 
-	render(
-		<EditSiteApp
-			reboot={ reboot }
-			homeTemplate={ settings.__unstableHomeTemplate }
-		/>,
-		target
-	);
+	render( <App reboot={ reboot } />, target );
 }
 
 /**
@@ -166,7 +160,6 @@ export function initializeEditor( id, settings ) {
 }
 
 export { default as __experimentalMainDashboardButton } from './components/main-dashboard-button';
-export { default as __experimentalNavigationToggle } from './components/navigation-sidebar/navigation-toggle';
 export { default as PluginSidebar } from './components/sidebar-edit-mode/plugin-sidebar';
 export { default as PluginSidebarMoreMenuItem } from './components/header-edit-mode/plugin-sidebar-more-menu-item';
 export { default as PluginMoreMenuItem } from './components/header-edit-mode/plugin-more-menu-item';
