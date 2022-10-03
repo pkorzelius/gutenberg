@@ -25,6 +25,7 @@ function gutenberg_reregister_core_block_types() {
 				'group',
 				'heading',
 				'html',
+				'input-field',
 				'list',
 				'list-item',
 				'media-text',
