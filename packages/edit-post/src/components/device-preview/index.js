@@ -1,9 +1,4 @@
 /**
- * External dependencies
- */
-import { get } from 'lodash';
-
-/**
  * WordPress dependencies
  */
 import { Icon, MenuGroup } from '@wordpress/components';
@@ -35,7 +30,7 @@ export default function DevicePreview() {
 			hasActiveMetaboxes: select( editPostStore ).hasMetaBoxes(),
 			isSaving: select( editPostStore ).isSavingMetaBoxes(),
 			isPostSaveable: select( editorStore ).isEditedPostSaveable(),
-			isViewable: get( postType, [ 'viewable' ], false ),
+			isViewable: postType?.viewable ?? false,
 			deviceType:
 				select( editPostStore ).__experimentalGetPreviewDeviceType(),
 		};
@@ -52,26 +47,27 @@ export default function DevicePreview() {
 			/* translators: button label text should, if possible, be under 16 characters. */
 			viewLabel={ __( 'Preview' ) }
 		>
-			{ isViewable && (
-				<MenuGroup>
-					<div className="edit-post-header-preview__grouping-external">
-						<PostPreviewButton
-							className={
-								'edit-post-header-preview__button-external'
-							}
-							role="menuitem"
-							forceIsAutosaveable={ hasActiveMetaboxes }
-							forcePreviewLink={ isSaving ? null : undefined }
-							textContent={
-								<>
-									{ __( 'Preview in new tab' ) }
-									<Icon icon={ external } />
-								</>
-							}
-						/>
-					</div>
-				</MenuGroup>
-			) }
+			{ ( { onClose } ) =>
+				isViewable && (
+					<MenuGroup>
+						<div className="edit-post-header-preview__grouping-external">
+							<PostPreviewButton
+								className="edit-post-header-preview__button-external"
+								role="menuitem"
+								forceIsAutosaveable={ hasActiveMetaboxes }
+								forcePreviewLink={ isSaving ? null : undefined }
+								textContent={
+									<>
+										{ __( 'Preview in new tab' ) }
+										<Icon icon={ external } />
+									</>
+								}
+								onPreview={ onClose }
+							/>
+						</div>
+					</MenuGroup>
+				)
+			}
 		</PreviewOptions>
 	);
 }
