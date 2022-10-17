@@ -258,7 +258,7 @@ A form. ([Source](https://github.com/WordPress/gutenberg/tree/trunk/packages/blo
 -	**Name:** core/form
 -	**Category:** common
 -	**Supports:** 
--	**Attributes:** action, method
+-	**Attributes:** action, formId, method
 
 ## Classic
 
