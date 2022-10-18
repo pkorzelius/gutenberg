@@ -223,7 +223,7 @@ export function AlignmentVisualizer( {
 		[ clientId ]
 	);
 
-	const [ contentWidth, setContentWidth ] = useState( 0 );
+	const [ editorWidth, setEditorWidth ] = useState( 0 );
 	const ref = useRefEffect( ( node ) => {
 		const { ownerDocument } = node;
 		const { defaultView } = ownerDocument;
@@ -231,7 +231,7 @@ export function AlignmentVisualizer( {
 			'.editor-styles-wrapper'
 		);
 		const updateWidth = () =>
-			setContentWidth( editorWrapperElement.offsetWidth );
+			setEditorWidth( editorWrapperElement.offsetWidth );
 		updateWidth();
 
 		const resizeObserver = defaultView.ResizeObserver
@@ -289,20 +289,20 @@ export function AlignmentVisualizer( {
 				return null;
 			} )
 			.filter( ( alignment ) => alignment !== null );
-	}, [ availableAlignments, layout ] );
+	}, [ editorWidth, availableAlignments, layout ] );
 
 	const wrapperStyle = useMemo( () => {
 		const currentAlignment = alignments.find(
 			( alignment ) => alignment.name === value
 		);
-		const offset = `calc( ( ${ contentWidth }px - ${ currentAlignment.style.width } ) / -2 )`;
+		const offset = `calc( ( ${ editorWidth }px - ${ currentAlignment.style.width } ) / -2 )`;
 		return {
 			top: 0,
 			bottom: 0,
 			left: offset,
 			right: offset,
 		};
-	}, [ alignments, contentWidth ] );
+	}, [ alignments, editorWidth ] );
 
 	return (
 		<BlockPopover clientId={ clientId } __unstableCoverTarget>
