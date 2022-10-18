@@ -225,10 +225,23 @@ export function AlignmentVisualizer( {
 
 	const [ contentWidth, setContentWidth ] = useState( 0 );
 	const ref = useRefEffect( ( node ) => {
-		setContentWidth(
-			node.ownerDocument.querySelector( '.editor-styles-wrapper' )
-				.offsetWidth
+		const { ownerDocument } = node;
+		const { defaultView } = ownerDocument;
+		const editorWrapperElement = ownerDocument.querySelector(
+			'.editor-styles-wrapper'
 		);
+		const updateWidth = () =>
+			setContentWidth( editorWrapperElement.offsetWidth );
+		updateWidth();
+
+		const resizeObserver = defaultView.ResizeObserver
+			? new defaultView.ResizeObserver( updateWidth )
+			: undefined;
+		resizeObserver?.observe( editorWrapperElement );
+
+		return () => {
+			resizeObserver?.disconnect();
+		};
 	}, [] );
 
 	const blockAllowedAlignments = getValidAlignments(
