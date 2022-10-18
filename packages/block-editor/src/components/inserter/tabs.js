@@ -20,11 +20,17 @@ const reusableBlocksTab = {
 	/* translators: Reusable blocks tab title in the block inserter. */
 	title: __( 'Reusable' ),
 };
+const mediaTab = {
+	name: 'media',
+	/* translators: Media tab title in the block inserter. */
+	title: __( 'Media' ),
+};
 
 function InserterTabs( {
 	children,
 	showPatterns = false,
 	showReusableBlocks = false,
+	showMedia = false,
 	onSelect,
 	prioritizePatterns,
 } ) {
@@ -40,7 +46,9 @@ function InserterTabs( {
 		if ( showReusableBlocks ) {
 			tempTabs.push( reusableBlocksTab );
 		}
-
+		if ( showMedia ) {
+			tempTabs.push( mediaTab );
+		}
 		return tempTabs;
 	}, [
 		prioritizePatterns,
@@ -48,6 +56,7 @@ function InserterTabs( {
 		showPatterns,
 		patternsTab,
 		showReusableBlocks,
+		showMedia,
 		reusableBlocksTab,
 	] );
 
