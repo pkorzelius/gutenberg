@@ -31,6 +31,7 @@ import {
 	__experimentalImageEditingProvider as ImageEditingProvider,
 	__experimentalGetElementClassName,
 	__experimentalUseBorderProps as useBorderProps,
+	__experimentalAlignmentVisualizer as AlignmentVisualizer,
 } from '@wordpress/block-editor';
 import {
 	useEffect,
@@ -582,34 +583,44 @@ export default function Image( {
 		/* eslint-enable no-lonely-if */
 
 		img = (
-			<ResizableBox
-				size={ {
-					width: width ?? 'auto',
-					height: height && ! hasCustomBorder ? height : 'auto',
-				} }
-				showHandle={ isSelected }
-				minWidth={ minWidth }
-				maxWidth={ maxWidthBuffer }
-				minHeight={ minHeight }
-				maxHeight={ maxWidthBuffer / ratio }
-				lockAspectRatio
-				enable={ {
-					top: false,
-					right: showRightHandle,
-					bottom: true,
-					left: showLeftHandle,
-				} }
-				onResizeStart={ onResizeStart }
-				onResizeStop={ ( event, direction, elt, delta ) => {
-					onResizeStop();
-					setAttributes( {
-						width: parseInt( currentWidth + delta.width, 10 ),
-						height: parseInt( currentHeight + delta.height, 10 ),
-					} );
-				} }
-			>
-				{ img }
-			</ResizableBox>
+			<>
+				<ResizableBox
+					size={ {
+						width: width ?? 'auto',
+						height: height && ! hasCustomBorder ? height : 'auto',
+					} }
+					showHandle={ isSelected }
+					minWidth={ minWidth }
+					maxWidth={ maxWidthBuffer }
+					minHeight={ minHeight }
+					maxHeight={ maxWidthBuffer / ratio }
+					lockAspectRatio
+					enable={ {
+						top: false,
+						right: showRightHandle,
+						bottom: true,
+						left: showLeftHandle,
+					} }
+					onResizeStart={ onResizeStart }
+					onResizeStop={ ( event, direction, elt, delta ) => {
+						onResizeStop();
+						setAttributes( {
+							width: parseInt( currentWidth + delta.width, 10 ),
+							height: parseInt(
+								currentHeight + delta.height,
+								10
+							),
+						} );
+					} }
+				>
+					{ img }
+				</ResizableBox>
+				<AlignmentVisualizer
+					clientId={ clientId }
+					allowedAlignments={ [ 'none', 'wide', 'full' ] }
+					value={ align }
+				/>
+			</>
 		);
 	}
 

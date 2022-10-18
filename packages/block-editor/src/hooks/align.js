@@ -6,7 +6,9 @@ import classnames from 'classnames';
 /**
  * WordPress dependencies
  */
-import { createHigherOrderComponent } from '@wordpress/compose';
+import { createHigherOrderComponent, useRefEffect } from '@wordpress/compose';
+import { useMemo, useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import { addFilter } from '@wordpress/hooks';
 import {
 	getBlockSupport,
@@ -19,8 +21,10 @@ import { useSelect } from '@wordpress/data';
  * Internal dependencies
  */
 import { BlockControls, BlockAlignmentControl } from '../components';
+import BlockPopover from '../components/block-popover';
 import useAvailableAlignments from '../components/block-alignment-control/use-available-alignments';
 import { store as blockEditorStore } from '../store';
+import { useLayout } from '../components//block-list/layout';
 
 /**
  * An array which includes all possible valid alignments,
@@ -207,6 +211,121 @@ export const withDataAlign = createHigherOrderComponent(
 		return <BlockListBlock { ...props } wrapperProps={ wrapperProps } />;
 	}
 );
+
+export function AlignmentVisualizer( {
+	value = 'none',
+	allowedAlignments,
+	clientId,
+	// attributes,
+} ) {
+	const layout = useLayout();
+	const blockName = useSelect(
+		( select ) => select( blockEditorStore ).getBlockName( clientId ),
+		[ clientId ]
+	);
+	const blockAllowedAlignments = getValidAlignments(
+		getBlockSupport( blockName, 'align' ),
+		hasBlockSupport( blockName, 'alignWide', true )
+	);
+	const availableAlignments = useAvailableAlignments(
+		allowedAlignments ?? blockAllowedAlignments
+	);
+	const mappedAlignments = availableAlignments
+		.map( ( { name } ) => {
+			if ( name === 'none' ) {
+				return {
+					name,
+					label: __( 'Content width' ),
+					width: layout.contentSize,
+				};
+			}
+			if ( name === 'wide' ) {
+				return {
+					name,
+					label: __( 'Wide width' ),
+					width: layout.wideSize,
+				};
+			}
+			if ( name === 'full' ) {
+				return {
+					name,
+					label: __( 'Full width' ),
+					width: '100%',
+				};
+			}
+			return null;
+		} )
+		.filter( ( alignment ) => alignment !== null );
+
+	const currentAlignment = mappedAlignments.find(
+		( alignment ) => alignment.name === value
+	);
+
+	const [ contentWidth, setContentWidth ] = useState( 0 );
+	const ref = useRefEffect( ( node ) => {
+		setContentWidth(
+			node.ownerDocument.querySelector( '.editor-styles-wrapper' )
+				.offsetWidth
+		);
+	}, [] );
+
+	const style = useMemo( () => {
+		const offset = `calc( ( ${ contentWidth }px - ${ currentAlignment.width } ) / -2 )`;
+		return {
+			top: 0,
+			bottom: 0,
+			left: offset,
+			right: offset,
+		};
+	}, [ mappedAlignments, currentAlignment, contentWidth ] );
+
+	// const [ isActive, setIsActive ] = useState( false );
+	// const valueRef = useRef( padding );
+	// const timeoutRef = useRef();
+
+	// const clearTimer = () => {
+	// 	if ( timeoutRef.current ) {
+	// 		window.clearTimeout( timeoutRef.current );
+	// 	}
+	// };
+
+	// useEffect( () => {
+	// 	if ( ! isShallowEqual( padding, valueRef.current ) ) {
+	// 		setIsActive( true );
+	// 		valueRef.current = padding;
+
+	// 		clearTimer();
+
+	// 		timeoutRef.current = setTimeout( () => {
+	// 			setIsActive( false );
+	// 		}, 400 );
+	// 	}
+
+	// 	return () => clearTimer();
+	// }, [ padding ] );
+
+	// if ( ! isActive ) {
+	// 	return null;
+	// }
+
+	return (
+		<BlockPopover
+			clientId={ clientId }
+			__unstableCoverTarget
+			// __unstableRefreshSize={ padding }
+		>
+			<div
+				ref={ ref }
+				className="block-editor__alignment-visualizer"
+				style={ style }
+			>
+				<div className="block-editor__alignment-visualizer-content-size"></div>
+				<div className="block-editor__alignment-visualizer-wide-width"></div>
+				<div className="block-editor__alignment-visualizer-full-width"></div>
+			</div>
+		</BlockPopover>
+	);
+}
 
 /**
  * Override props assigned to save component to inject alignment class name if
