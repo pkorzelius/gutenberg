@@ -163,6 +163,7 @@ export default function Image( {
 		setLoadedNaturalSize,
 	] = useState( {} );
 	const [ isEditingImage, setIsEditingImage ] = useState( false );
+	const [ isResizingImage, setIsResizingImage ] = useState( false );
 	const [ externalBlob, setExternalBlob ] = useState();
 	const clientWidth = useClientWidth( containerRef, [ align ] );
 	const isResizable =
@@ -233,10 +234,12 @@ export default function Image( {
 
 	function onResizeStart() {
 		toggleSelection( false );
+		setIsResizingImage( true );
 	}
 
 	function onResizeStop() {
 		toggleSelection( true );
+		setIsResizingImage( false );
 	}
 
 	function onImageError() {
@@ -584,11 +587,13 @@ export default function Image( {
 
 		img = (
 			<>
-				<AlignmentVisualizer
-					clientId={ clientId }
-					allowedAlignments={ [ 'none', 'wide', 'full' ] }
-					value={ align }
-				/>
+				{ isResizingImage && (
+					<AlignmentVisualizer
+						clientId={ clientId }
+						allowedAlignments={ [ 'none', 'wide', 'full' ] }
+						value={ align }
+					/>
+				) }
 				<ResizableBox
 					size={ {
 						width: width ?? 'auto',
