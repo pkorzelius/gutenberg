@@ -14,13 +14,14 @@
 		right: 0;
 		bottom: 0;
 		left: 0;
-		pointer-events: none;
+		pointer-events: none !important;
 		background-color: var(--wp-admin-theme-color);
 		opacity: 0.1;
 	}
 }
 
 .block-editor__alignment-visualizer-step {
+	pointer-events: none !important;
 	position: absolute;
 	top: 0;
 	bottom: 0;
@@ -29,9 +30,26 @@
 }
 
 .block-editor__alignment-visualizer-step-inner {
+	pointer-events: none !important;
 	height: 100%;
 	margin: 0 auto;
-	opacity: 0.5;
+	opacity: 0.7;
 	border-left: solid 2px var(--wp-admin-theme-color);
 	border-right: solid 2px var(--wp-admin-theme-color);
+}
+
+// TODO - make this a popover style variation.
+.block-editor__alignment-visualizer-step-label-popover .components-popover__content {
+	outline: none;
+	box-shadow: none;
+}
+
+.block-editor__alignment-visualizer-step-label {
+	font-size: $default-font-size;
+	font-weight: bold;
+	text-transform: uppercase;
+	white-space: nowrap;
+	margin: $grid-unit-05 0;
+	opacity: 0.7;
+	color: var(--wp-admin-theme-color);
 }

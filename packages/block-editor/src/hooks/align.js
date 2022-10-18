@@ -6,6 +6,7 @@ import classnames from 'classnames';
 /**
  * WordPress dependencies
  */
+import { Popover } from '@wordpress/components';
 import { createHigherOrderComponent, useRefEffect } from '@wordpress/compose';
 import { useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -215,7 +216,6 @@ export function AlignmentVisualizer( {
 	value = 'none',
 	allowedAlignments,
 	clientId,
-	// attributes,
 } ) {
 	const layout = useLayout();
 	const blockName = useSelect(
@@ -235,6 +235,10 @@ export function AlignmentVisualizer( {
 		getBlockSupport( blockName, 'align' ),
 		hasBlockSupport( blockName, 'alignWide', true )
 	);
+
+	// Allow override of `blockAllowedAlignments`. The image block doesn't use
+	// alignment block supports, so this allows the image block to directly
+	// declare what it supports.
 	const availableAlignments = useAvailableAlignments(
 		allowedAlignments ?? blockAllowedAlignments
 	);
@@ -287,41 +291,8 @@ export function AlignmentVisualizer( {
 		};
 	}, [ alignments, contentWidth ] );
 
-	// const [ isActive, setIsActive ] = useState( false );
-	// const valueRef = useRef( padding );
-	// const timeoutRef = useRef();
-
-	// const clearTimer = () => {
-	// 	if ( timeoutRef.current ) {
-	// 		window.clearTimeout( timeoutRef.current );
-	// 	}
-	// };
-
-	// useEffect( () => {
-	// 	if ( ! isShallowEqual( padding, valueRef.current ) ) {
-	// 		setIsActive( true );
-	// 		valueRef.current = padding;
-
-	// 		clearTimer();
-
-	// 		timeoutRef.current = setTimeout( () => {
-	// 			setIsActive( false );
-	// 		}, 400 );
-	// 	}
-
-	// 	return () => clearTimer();
-	// }, [ padding ] );
-
-	// if ( ! isActive ) {
-	// 	return null;
-	// }
-
 	return (
-		<BlockPopover
-			clientId={ clientId }
-			__unstableCoverTarget
-			// __unstableRefreshSize={ padding }
-		>
+		<BlockPopover clientId={ clientId } __unstableCoverTarget>
 			<div
 				ref={ ref }
 				className="block-editor__alignment-visualizer"
@@ -335,7 +306,17 @@ export function AlignmentVisualizer( {
 						<div
 							className="block-editor__alignment-visualizer-step-inner"
 							style={ alignment.style }
-						></div>
+						>
+							<Popover
+								className="block-editor__alignment-visualizer-step-label-popover"
+								placement="top-end"
+								flip
+							>
+								<div className="block-editor__alignment-visualizer-step-label">
+									{ alignment.label }
+								</div>
+							</Popover>
+						</div>
 					</div>
 				) ) }
 			</div>
