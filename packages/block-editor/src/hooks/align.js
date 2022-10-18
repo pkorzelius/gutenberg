@@ -211,7 +211,6 @@ export const withDataAlign = createHigherOrderComponent(
 		return <BlockListBlock { ...props } wrapperProps={ wrapperProps } />;
 	}
 );
-
 export function AlignmentVisualizer( {
 	value = 'none',
 	allowedAlignments,
@@ -223,43 +222,6 @@ export function AlignmentVisualizer( {
 		( select ) => select( blockEditorStore ).getBlockName( clientId ),
 		[ clientId ]
 	);
-	const blockAllowedAlignments = getValidAlignments(
-		getBlockSupport( blockName, 'align' ),
-		hasBlockSupport( blockName, 'alignWide', true )
-	);
-	const availableAlignments = useAvailableAlignments(
-		allowedAlignments ?? blockAllowedAlignments
-	);
-	const mappedAlignments = availableAlignments
-		.map( ( { name } ) => {
-			if ( name === 'none' ) {
-				return {
-					name,
-					label: __( 'Content width' ),
-					width: layout.contentSize,
-				};
-			}
-			if ( name === 'wide' ) {
-				return {
-					name,
-					label: __( 'Wide width' ),
-					width: layout.wideSize,
-				};
-			}
-			if ( name === 'full' ) {
-				return {
-					name,
-					label: __( 'Full width' ),
-					width: '100%',
-				};
-			}
-			return null;
-		} )
-		.filter( ( alignment ) => alignment !== null );
-
-	const currentAlignment = mappedAlignments.find(
-		( alignment ) => alignment.name === value
-	);
 
 	const [ contentWidth, setContentWidth ] = useState( 0 );
 	const ref = useRefEffect( ( node ) => {
@@ -269,15 +231,61 @@ export function AlignmentVisualizer( {
 		);
 	}, [] );
 
-	const style = useMemo( () => {
-		const offset = `calc( ( ${ contentWidth }px - ${ currentAlignment.width } ) / -2 )`;
+	const blockAllowedAlignments = getValidAlignments(
+		getBlockSupport( blockName, 'align' ),
+		hasBlockSupport( blockName, 'alignWide', true )
+	);
+	const availableAlignments = useAvailableAlignments(
+		allowedAlignments ?? blockAllowedAlignments
+	);
+
+	const alignments = useMemo( () => {
+		return [ 'none', 'wide', 'full' ]
+			.map( ( name ) => {
+				if ( name === 'none' ) {
+					return {
+						name,
+						label: __( 'Content width' ),
+						style: {
+							width: layout.contentSize,
+						},
+					};
+				}
+				if ( name === 'wide' ) {
+					return {
+						name,
+						label: __( 'Wide width' ),
+						style: {
+							width: layout.wideSize,
+						},
+					};
+				}
+				if ( name === 'full' ) {
+					return {
+						name,
+						label: __( 'Full width' ),
+						style: {
+							width: '100%',
+						},
+					};
+				}
+				return null;
+			} )
+			.filter( ( alignment ) => alignment !== null );
+	}, [ availableAlignments, layout ] );
+
+	const wrapperStyle = useMemo( () => {
+		const currentAlignment = alignments.find(
+			( alignment ) => alignment.name === value
+		);
+		const offset = `calc( ( ${ contentWidth }px - ${ currentAlignment.style.width } ) / -2 )`;
 		return {
 			top: 0,
 			bottom: 0,
 			left: offset,
 			right: offset,
 		};
-	}, [ mappedAlignments, currentAlignment, contentWidth ] );
+	}, [ alignments, contentWidth ] );
 
 	// const [ isActive, setIsActive ] = useState( false );
 	// const valueRef = useRef( padding );
@@ -317,11 +325,19 @@ export function AlignmentVisualizer( {
 			<div
 				ref={ ref }
 				className="block-editor__alignment-visualizer"
-				style={ style }
+				style={ wrapperStyle }
 			>
-				<div className="block-editor__alignment-visualizer-content-size"></div>
-				<div className="block-editor__alignment-visualizer-wide-width"></div>
-				<div className="block-editor__alignment-visualizer-full-width"></div>
+				{ alignments.map( ( alignment ) => (
+					<div
+						key={ alignment.name }
+						className="block-editor__alignment-visualizer-step"
+					>
+						<div
+							className="block-editor__alignment-visualizer-step-inner"
+							style={ alignment.style }
+						></div>
+					</div>
+				) ) }
 			</div>
 		</BlockPopover>
 	);

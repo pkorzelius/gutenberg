@@ -4,9 +4,34 @@
 	bottom: 0;
 	left: 0;
 	right: 0;
-	opacity: 0.5;
-	background-color: var(--wp-admin-theme-color);
-	// border-style: solid;
 	pointer-events: none !important;
 	box-sizing: border-box;
+
+	&::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		pointer-events: none;
+		background-color: var(--wp-admin-theme-color);
+		opacity: 0.1;
+	}
+}
+
+.block-editor__alignment-visualizer-step {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+.block-editor__alignment-visualizer-step-inner {
+	height: 100%;
+	margin: 0 auto;
+	opacity: 0.5;
+	border-left: solid 2px var(--wp-admin-theme-color);
+	border-right: solid 2px var(--wp-admin-theme-color);
 }
