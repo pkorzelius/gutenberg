@@ -56,7 +56,6 @@ export class PostPublishPanel extends Component {
 	render() {
 		const {
 			forceIsDirty,
-			forceIsSaving,
 			isBeingScheduled,
 			isPublished,
 			isPublishSidebarEnabled,
@@ -92,10 +91,9 @@ export class PostPublishPanel extends Component {
 						<>
 							<div className="editor-post-publish-panel__header-publish-button">
 								<PostPublishButton
-									focusOnMount={ true }
+									focusOnMount
 									onSubmit={ this.onSubmit }
 									forceIsDirty={ forceIsDirty }
-									forceIsSaving={ forceIsSaving }
 								/>
 							</div>
 							<div className="editor-post-publish-panel__header-cancel-button">

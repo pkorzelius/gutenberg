@@ -49,7 +49,7 @@ export function PublishButtonLabel( {
 }
 
 export default compose( [
-	withSelect( ( select, { forceIsSaving } ) => {
+	withSelect( ( select ) => {
 		const {
 			isCurrentPostPublished,
 			isEditedPostBeingScheduled,
@@ -62,7 +62,7 @@ export default compose( [
 		return {
 			isPublished: isCurrentPostPublished(),
 			isBeingScheduled: isEditedPostBeingScheduled(),
-			isSaving: forceIsSaving || isSavingPost(),
+			isSaving: isSavingPost(),
 			isPublishing: isPublishingPost(),
 			hasPublishAction: get(
 				getCurrentPost(),

@@ -28,7 +28,6 @@ function Header( { setEntitiesSavedStatesCallback } ) {
 	const {
 		hasActiveMetaboxes,
 		isPublishSidebarOpened,
-		isSaving,
 		showIconLabels,
 		isDistractionFree,
 	} = useSelect(
@@ -36,7 +35,6 @@ function Header( { setEntitiesSavedStatesCallback } ) {
 			hasActiveMetaboxes: select( editPostStore ).hasMetaBoxes(),
 			isPublishSidebarOpened:
 				select( editPostStore ).isPublishSidebarOpened(),
-			isSaving: select( editPostStore ).isSavingMetaBoxes(),
 			showIconLabels:
 				select( editPostStore ).isFeatureActive( 'showIconLabels' ),
 			isDistractionFree:
@@ -90,18 +88,13 @@ function Header( { setEntitiesSavedStatesCallback } ) {
 					// when the publish sidebar has been closed.
 					<PostSavedState
 						forceIsDirty={ hasActiveMetaboxes }
-						forceIsSaving={ isSaving }
 						showIconLabels={ showIconLabels }
 					/>
 				) }
 				<DevicePreview />
-				<PostPreviewButton
-					forceIsAutosaveable={ hasActiveMetaboxes }
-					forcePreviewLink={ isSaving ? null : undefined }
-				/>
+				<PostPreviewButton forceIsAutosaveable={ hasActiveMetaboxes } />
 				<PostPublishButtonOrToggle
 					forceIsDirty={ hasActiveMetaboxes }
-					forceIsSaving={ isSaving }
 					setEntitiesSavedStatesCallback={
 						setEntitiesSavedStatesCallback
 					}
