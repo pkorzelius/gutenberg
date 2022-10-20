@@ -2,6 +2,7 @@
  * External dependencies
  */
 const fs = require( 'fs' );
+const os = require( 'os' );
 const path = require( 'path' );
 const { mapValues, kebabCase } = require( 'lodash' );
 
@@ -193,6 +194,10 @@ async function runTestSuite( testSuite, performanceTestDirectory ) {
  * @param {WPPerformanceCommandOptions} options  Command options.
  */
 async function runPerformanceTests( branches, options ) {
+	setInterval( () => {
+		log( '*****' + JSON.stringify( os.cpus() ) );
+	}, 1000 );
+
 	// The default value doesn't work because commander provides an array.
 	if ( branches.length === 0 ) {
 		branches = [ 'trunk' ];
