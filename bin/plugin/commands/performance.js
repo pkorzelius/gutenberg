@@ -195,7 +195,8 @@ async function runTestSuite( testSuite, performanceTestDirectory ) {
  */
 async function runPerformanceTests( branches, options ) {
 	setInterval( () => {
-		log( '*****' + JSON.stringify( os.cpus() ) );
+		const [ s, ns ] = process.hrtime();
+		log( '*****' + JSON.stringify( [ s + ns / 1e9, os.cpus() ] ) );
 	}, 1000 );
 
 	// The default value doesn't work because commander provides an array.
