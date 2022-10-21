@@ -391,3 +391,51 @@ export const getCurrentTemplateTemplateParts = createRegistrySelector(
 export function getEditorMode( state ) {
 	return __unstableGetPreference( state, 'editorMode' );
 }
+
+/**
+ * Returns the post currently being edited in its last known saved state, not
+ * including unsaved edits. Returns an object containing relevant default post
+ * values if the post has not yet been saved.
+ *
+ * @param {Object} state Global application state.
+ *
+ * @return {Object} Post object.
+ */
+export const getCurrentTemplate = createRegistrySelector(
+	( select ) => ( state ) => {
+		const templateType = getEditedPostType( state );
+		const templateId = getEditedPostId( state );
+		const template = templateId
+			? select( coreDataStore ).getEntityRecord(
+					'postType',
+					templateType,
+					templateId
+			  )
+			: null;
+
+		return template;
+	}
+);
+
+/**
+ * Returns the number of revisions of the post currently being edited.
+ *
+ * @param {Object} state Global application state.
+ *
+ * @return {number} Number of revisions.
+ */
+export function getCurrentTemplateRevisionsCount( state ) {
+	return getCurrentTemplate( state ).revision_count ?? 0;
+}
+
+/**
+ * Returns the last revision ID of the post currently being edited,
+ * or null if the post has no revisions.
+ *
+ * @param {Object} state Global application state.
+ *
+ * @return {?number} ID of the last revision.
+ */
+export function getCurrentTemplateLastRevisionId( state ) {
+	return getCurrentTemplate( state ).latest_revision_id ?? null;
+}
