@@ -6,7 +6,7 @@ import {
 	registerCoreBlocks,
 	__experimentalRegisterExperimentalCoreBlocks,
 } from '@wordpress/block-library';
-import { dispatch, select } from '@wordpress/data';
+import { dispatch } from '@wordpress/data';
 import { render, unmountComponentAtNode } from '@wordpress/element';
 import {
 	__experimentalFetchLinkSuggestions as fetchLinkSuggestions,
@@ -85,16 +85,6 @@ export function reinitializeEditor( target, settings ) {
 			welcomeGuideStyles: true,
 			showListViewByDefault: false,
 		} );
-
-		// Check if the block list view should be open by default.
-		if (
-			select( preferencesStore ).get(
-				'core/edit-site',
-				'showListViewByDefault'
-			)
-		) {
-			dispatch( editSiteStore ).setIsListViewOpened( true );
-		}
 
 		dispatch( interfaceStore ).setDefaultComplementaryArea(
 			'core/edit-site',
