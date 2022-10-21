@@ -198,7 +198,7 @@ async function runPerformanceTests( branches, options ) {
 		const [ s, ns ] = process.hrtime();
 		log( '*****' + JSON.stringify( [ s + ns / 1e9, os.cpus() ] ) );
 
-		setTimeout( reportCpuUsage, 10000 );
+		setTimeout( reportCpuUsage, 60000 );
 	};
 
 	reportCpuUsage();
