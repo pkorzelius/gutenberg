@@ -194,10 +194,14 @@ async function runTestSuite( testSuite, performanceTestDirectory ) {
  * @param {WPPerformanceCommandOptions} options  Command options.
  */
 async function runPerformanceTests( branches, options ) {
-	setInterval( () => {
+	const reportCpuUsage = () => {
 		const [ s, ns ] = process.hrtime();
 		log( '*****' + JSON.stringify( [ s + ns / 1e9, os.cpus() ] ) );
-	}, 10000 );
+
+		setTimeout( reportCpuUsage, 10000 );
+	};
+
+	reportCpuUsage();
 
 	// The default value doesn't work because commander provides an array.
 	if ( branches.length === 0 ) {
