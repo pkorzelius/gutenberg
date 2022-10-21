@@ -197,7 +197,7 @@ async function runPerformanceTests( branches, options ) {
 	setInterval( () => {
 		const [ s, ns ] = process.hrtime();
 		log( '*****' + JSON.stringify( [ s + ns / 1e9, os.cpus() ] ) );
-	}, 1000 );
+	}, 10000 );
 
 	// The default value doesn't work because commander provides an array.
 	if ( branches.length === 0 ) {
