@@ -4,7 +4,7 @@ async function toggleListView() {
 	);
 }
 
-async function isListViewOpen() {
+export async function isListViewOpen() {
 	return await page.evaluate( () => {
 		return !! document.querySelector(
 			'.edit-post-header-toolbar__list-view-toggle.is-pressed, .edit-site-header-edit-mode__list-view-toggle.is-pressed, .edit-widgets-header-toolbar__list-view-toggle.is-pressed'
