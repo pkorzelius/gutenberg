@@ -9,6 +9,7 @@ import {
 } from '@wordpress/components';
 import { useInstanceId } from '@wordpress/compose';
 import { __ } from '@wordpress/i18n';
+import { parse } from '@wordpress/blocks';
 
 /**
  * Internal dependencies
@@ -17,7 +18,15 @@ import BlockPreview from '../block-preview';
 import InserterDraggableBlocks from '../inserter-draggable-blocks';
 
 function BlockPattern( { isDraggable, pattern, onClick, composite } ) {
-	const { blocks, viewportWidth } = pattern;
+	const { viewportWidth } = pattern;
+	let { blocks } = pattern;
+	// Fallback for patterns fro PD, that haven't been parsed.
+	if ( ! blocks ) {
+		blocks = parse( pattern.content, {
+			__unstableSkipMigrationLogs: true,
+		} );
+	}
+
 	const instanceId = useInstanceId( BlockPattern );
 	const descriptionId = `block-editor-block-patterns-list__item-description-${ instanceId }`;
 
@@ -50,6 +59,7 @@ function BlockPattern( { isDraggable, pattern, onClick, composite } ) {
 							viewportWidth={ viewportWidth }
 						/>
 						<div className="block-editor-block-patterns-list__item-title">
+							{ /* // TODO: decode titles from PD */ }
 							{ pattern.title }
 						</div>
 						{ !! pattern.description && (
@@ -90,14 +100,16 @@ function BlockPatternList( {
 				const isShown = shownPatterns.includes( pattern );
 				return isShown ? (
 					<BlockPattern
-						key={ pattern.name }
+						key={ pattern.name || pattern.id } // TODO: This is a temporary fix to avoid a crash from PD.
 						pattern={ pattern }
 						onClick={ onClickPattern }
 						isDraggable={ isDraggable }
 						composite={ composite }
 					/>
 				) : (
-					<BlockPatternPlaceholder key={ pattern.name } />
+					<BlockPatternPlaceholder
+						key={ pattern.name || pattern.id }
+					/>
 				);
 			} ) }
 		</Composite>

@@ -9,7 +9,7 @@
 /**
  * Controller which provides REST endpoint for block patterns.
  */
-class Gutenberg_REST_Pattern_Directory_Controller extends WP_REST_Pattern_Directory_Controller {
+class Gutenberg_REST_Pattern_Directory_Controller_6_0 extends WP_REST_Pattern_Directory_Controller {
 	/**
 	 * Search and retrieve block patterns metadata
 	 *
