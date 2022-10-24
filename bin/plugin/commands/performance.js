@@ -211,6 +211,7 @@ async function runPerformanceTests( branches, options ) {
 
 	const baseDirectory = getRandomTemporaryPath();
 	fs.mkdirSync( baseDirectory, { recursive: true } );
+	runShellScript( `cd ${ baseDirectory }` );
 
 	const git = SimpleGit( baseDirectory );
 	await git
