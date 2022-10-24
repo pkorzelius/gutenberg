@@ -257,8 +257,8 @@ export function AlignmentVisualizer( {
 	);
 
 	const alignments = useMemo( () => {
-		return [ 'none', 'wide', 'full' ]
-			.map( ( name ) => {
+		return availableAlignments
+			.map( ( { name } ) => {
 				if ( name === 'none' ) {
 					return {
 						name,
