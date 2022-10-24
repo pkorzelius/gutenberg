@@ -193,7 +193,7 @@ async function runPerformanceTests( branches, options ) {
 			'Make sure these ports are not used before continuing.\n'
 	);
 
-	if ( ! options.ci ) {
+	if ( ! runningInCI ) {
 		await askForConfirmation( 'Ready to go? ' );
 	}
 
