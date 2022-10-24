@@ -218,12 +218,12 @@ async function runPerformanceTests( branches, options ) {
 		.raw( 'init' )
 		.raw( 'remote', 'add', 'origin', config.gitRepositoryURL );
 
-	await git.raw( 'fetch' );
 	for ( const ref of refs ) {
 		await git.raw( 'fetch', 'origin', ref );
 	}
 
 	await git.raw( 'checkout', refs[ 0 ] );
+	await git.raw( 'fetch' );
 	await git.raw( 'pull', '-p' );
 
 	const rootDirectory = getRandomTemporaryPath();
