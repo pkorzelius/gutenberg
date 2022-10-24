@@ -194,9 +194,16 @@ async function runTestSuite( testSuite, performanceTestDirectory ) {
  * @param {WPPerformanceCommandOptions} options  Command options.
  */
 async function runPerformanceTests( branches, options ) {
+	let lastCpuReport = process.hrtime();
+
 	const reportCpuUsage = () => {
-		const [ s, ns ] = process.hrtime();
-		log( '*****' + JSON.stringify( [ s + ns / 1e9, os.cpus() ] ) );
+		lastCpuReport = process.hrtime( lastCpuReport );
+		const [ s, ns ] = lastCpuReport;
+		if ( s > 5 ) {
+			log( '*****' + JSON.stringify( [ s + ns / 1e9, os.cpus() ] ) );
+		}
+
+		setTimeout( reportCpuUsage, 10000 );
 	};
 
 	reportCpuUsage();
@@ -460,8 +467,6 @@ async function runPerformanceTests( branches, options ) {
 			JSON.stringify( results[ testSuite ], null, 2 )
 		);
 	}
-
-	reportCpuUsage();
 }
 
 module.exports = {
