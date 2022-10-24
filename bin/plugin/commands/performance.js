@@ -4,6 +4,7 @@
 const fs = require( 'fs' );
 const path = require( 'path' );
 const { mapValues, kebabCase } = require( 'lodash' );
+const SimpleGit = require( 'simple-git' );
 
 /**
  * Internal dependencies
@@ -15,7 +16,6 @@ const {
 	askForConfirmation,
 	getRandomTemporaryPath,
 } = require( '../lib/utils' );
-const git = require( '../lib/git' );
 const config = require( '../config' );
 
 /**
@@ -147,24 +147,6 @@ function curateResults( results ) {
 }
 
 /**
- * Set up the given branch for testing.
- *
- * @param {string} branch               Branch name.
- * @param {string} environmentDirectory Path to the plugin environment's clone.
- */
-async function setUpGitBranch( branch, environmentDirectory ) {
-	// Restore clean working directory (e.g. if `package-lock.json` has local
-	// changes after install).
-	await git.discardLocalChanges( environmentDirectory );
-
-	log( '        >> Fetching the ' + formats.success( branch ) + ' branch' );
-	await git.checkoutRemoteBranch( environmentDirectory, branch );
-
-	log( '        >> Building the ' + formats.success( branch ) + ' branch' );
-	await runShellScript( 'npm ci && npm run build', environmentDirectory );
-}
-
-/**
  * Runs the performance tests on the current branch.
  *
  * @param {string} testSuite                Name of the tests set.
@@ -193,6 +175,12 @@ async function runTestSuite( testSuite, performanceTestDirectory ) {
  * @param {WPPerformanceCommandOptions} options  Command options.
  */
 async function runPerformanceTests( branches, options ) {
+	const branchesWereSpecified = branches?.length > 0;
+	const runningInCI = !! process.env.CI;
+	const inferTestBranches = runningInCI && ! branchesWereSpecified;
+	const mergeRef = process.env.GITHUB_SHA;
+	const baseRef = process.env.GITHUB_BASE_REF;
+
 	// The default value doesn't work because commander provides an array.
 	if ( branches.length === 0 ) {
 		branches = [ 'trunk' ];
@@ -212,24 +200,35 @@ async function runPerformanceTests( branches, options ) {
 	// 1- Preparing the tests directory.
 	log( '\n>> Preparing the tests directories' );
 	log( '    >> Cloning the repository' );
-	const baseDirectory = await git.clone( config.gitRepositoryURL );
+
+	const refs = inferTestBranches ? [ mergeRef, baseRef ] : branches;
+
+	if ( refs.length <= 0 ) {
+		throw new Error(
+			`Need at least two git refs to run: given ${ refs.join( ', ' ) }`
+		);
+	}
+
+	const baseDirectory = getRandomTemporaryPath();
+	fs.mkdirSync( baseDirectory, { recursive: true } );
+
+	const git = SimpleGit( baseDirectory );
+	await git
+		.raw( 'init' )
+		.raw( 'remote', 'add', 'origin', config.gitRepositoryURL );
+
+	for ( const ref of refs ) {
+		await git.raw( 'fetch', '--depth=1', 'origin', ref );
+	}
+
+	await git.raw( 'checkout', refs[ 0 ] );
+
 	const rootDirectory = getRandomTemporaryPath();
 	const performanceTestDirectory = rootDirectory + '/tests';
 	await runShellScript( 'mkdir -p ' + rootDirectory );
 	await runShellScript(
 		'cp -R ' + baseDirectory + ' ' + performanceTestDirectory
 	);
-	if ( !! options.testsBranch ) {
-		log(
-			'    >> Fetching the test branch: ' +
-				formats.success( options.testsBranch ) +
-				' branch'
-		);
-		await git.checkoutRemoteBranch(
-			performanceTestDirectory,
-			options.testsBranch
-		);
-	}
 	log( '    >> Installing dependencies and building packages' );
 	await runShellScript(
 		'npm ci && npm run build:packages',
@@ -241,17 +240,24 @@ async function runPerformanceTests( branches, options ) {
 	// 2- Preparing the environment directories per branch.
 	log( '\n>> Preparing an environment directory per branch' );
 	const branchDirectories = {};
-	for ( const branch of branches ) {
-		log( '    >> Branch: ' + branch );
+	for ( const ref of refs ) {
+		log( '    >> Branch: ' + ref );
 		const environmentDirectory =
-			rootDirectory + '/envs/' + kebabCase( branch );
+			rootDirectory + '/envs/' + kebabCase( ref );
 		// @ts-ignore
-		branchDirectories[ branch ] = environmentDirectory;
+		branchDirectories[ ref ] = environmentDirectory;
 		await runShellScript( 'mkdir ' + environmentDirectory );
 		await runShellScript(
 			'cp -R ' + baseDirectory + ' ' + environmentDirectory + '/plugin'
 		);
-		await setUpGitBranch( branch, environmentDirectory + '/plugin' );
+
+		log( '        >> Fetching the ' + formats.success( ref ) + ' ref' );
+		const refGit = SimpleGit( `${ environmentDirectory }/plugin` );
+		await refGit.reset( 'hard' ).checkout( ref );
+
+		log( '        >> Building the ' + formats.success( ref ) + ' ref' );
+		await runShellScript( 'npm ci && npm run build', environmentDirectory );
+
 		await runShellScript(
 			'cp ' +
 				path.resolve(
@@ -299,13 +305,11 @@ async function runPerformanceTests( branches, options ) {
 		'\n>> Perf Tests Directory : ' +
 			formats.success( performanceTestDirectory )
 	);
-	for ( const branch of branches ) {
+	for ( const ref of refs ) {
 		log(
-			'>> Environment Directory (' +
-				branch +
-				') : ' +
-				// @ts-ignore
-				formats.success( branchDirectories[ branch ] )
+			`>> Environment Directory (${ ref }) : ${ formats.success(
+				branchDirectories[ ref ]
+			) }`
 		);
 	}
 
@@ -323,17 +327,17 @@ async function runPerformanceTests( branches, options ) {
 		// Alternate three times between branches.
 		for ( let i = 0; i < 3; i++ ) {
 			rawResults[ i ] = {};
-			for ( const branch of branches ) {
+			for ( const ref of refs ) {
 				// @ts-ignore
-				const environmentDirectory = branchDirectories[ branch ];
-				log( '    >> Branch: ' + branch + ', Suite: ' + testSuite );
+				const environmentDirectory = branchDirectories[ ref ];
+				log( '    >> Branch: ' + ref + ', Suite: ' + testSuite );
 				log( '        >> Starting the environment.' );
 				await runShellScript(
 					'../../tests/node_modules/.bin/wp-env start',
 					environmentDirectory
 				);
 				log( '        >> Running the test.' );
-				rawResults[ i ][ branch ] = await runTestSuite(
+				rawResults[ i ][ ref ] = await runTestSuite(
 					testSuite,
 					performanceTestDirectory
 				);
@@ -346,73 +350,69 @@ async function runPerformanceTests( branches, options ) {
 		}
 
 		// Computing medians.
-		for ( const branch of branches ) {
+		for ( const ref of refs ) {
 			const medians = mapValues(
 				{
 					serverResponse: rawResults.map(
-						( r ) => r[ branch ].serverResponse
+						( r ) => r[ ref ].serverResponse
 					),
-					firstPaint: rawResults.map(
-						( r ) => r[ branch ].firstPaint
-					),
+					firstPaint: rawResults.map( ( r ) => r[ ref ].firstPaint ),
 					domContentLoaded: rawResults.map(
-						( r ) => r[ branch ].domContentLoaded
+						( r ) => r[ ref ].domContentLoaded
 					),
-					loaded: rawResults.map( ( r ) => r[ branch ].loaded ),
+					loaded: rawResults.map( ( r ) => r[ ref ].loaded ),
 					firstContentfulPaint: rawResults.map(
-						( r ) => r[ branch ].firstContentfulPaint
+						( r ) => r[ ref ].firstContentfulPaint
 					),
-					firstBlock: rawResults.map(
-						( r ) => r[ branch ].firstBlock
-					),
-					type: rawResults.map( ( r ) => r[ branch ].type ),
-					minType: rawResults.map( ( r ) => r[ branch ].minType ),
-					maxType: rawResults.map( ( r ) => r[ branch ].maxType ),
-					focus: rawResults.map( ( r ) => r[ branch ].focus ),
-					minFocus: rawResults.map( ( r ) => r[ branch ].minFocus ),
-					maxFocus: rawResults.map( ( r ) => r[ branch ].maxFocus ),
+					firstBlock: rawResults.map( ( r ) => r[ ref ].firstBlock ),
+					type: rawResults.map( ( r ) => r[ ref ].type ),
+					minType: rawResults.map( ( r ) => r[ ref ].minType ),
+					maxType: rawResults.map( ( r ) => r[ ref ].maxType ),
+					focus: rawResults.map( ( r ) => r[ ref ].focus ),
+					minFocus: rawResults.map( ( r ) => r[ ref ].minFocus ),
+					maxFocus: rawResults.map( ( r ) => r[ ref ].maxFocus ),
 					inserterOpen: rawResults.map(
-						( r ) => r[ branch ].inserterOpen
+						( r ) => r[ ref ].inserterOpen
 					),
 					minInserterOpen: rawResults.map(
-						( r ) => r[ branch ].minInserterOpen
+						( r ) => r[ ref ].minInserterOpen
 					),
 					maxInserterOpen: rawResults.map(
-						( r ) => r[ branch ].maxInserterOpen
+						( r ) => r[ ref ].maxInserterOpen
 					),
 					inserterSearch: rawResults.map(
-						( r ) => r[ branch ].inserterSearch
+						( r ) => r[ ref ].inserterSearch
 					),
 					minInserterSearch: rawResults.map(
-						( r ) => r[ branch ].minInserterSearch
+						( r ) => r[ ref ].minInserterSearch
 					),
 					maxInserterSearch: rawResults.map(
-						( r ) => r[ branch ].maxInserterSearch
+						( r ) => r[ ref ].maxInserterSearch
 					),
 					inserterHover: rawResults.map(
-						( r ) => r[ branch ].inserterHover
+						( r ) => r[ ref ].inserterHover
 					),
 					minInserterHover: rawResults.map(
-						( r ) => r[ branch ].minInserterHover
+						( r ) => r[ ref ].minInserterHover
 					),
 					maxInserterHover: rawResults.map(
-						( r ) => r[ branch ].maxInserterHover
+						( r ) => r[ ref ].maxInserterHover
 					),
 					listViewOpen: rawResults.map(
-						( r ) => r[ branch ].listViewOpen
+						( r ) => r[ ref ].listViewOpen
 					),
 					minListViewOpen: rawResults.map(
-						( r ) => r[ branch ].minListViewOpen
+						( r ) => r[ ref ].minListViewOpen
 					),
 					maxListViewOpen: rawResults.map(
-						( r ) => r[ branch ].maxListViewOpen
+						( r ) => r[ ref ].maxListViewOpen
 					),
 				},
 				median
 			);
 
 			// Format results as times.
-			results[ testSuite ][ branch ] = mapValues( medians, formatTime );
+			results[ testSuite ][ ref ] = mapValues( medians, formatTime );
 		}
 	}
 
