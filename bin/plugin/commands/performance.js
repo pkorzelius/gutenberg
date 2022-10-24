@@ -224,7 +224,6 @@ async function runPerformanceTests( branches, options ) {
 
 	await git.raw( 'checkout', refs[ 0 ] );
 	await git.raw( 'fetch' );
-	await git.raw( 'pull', '-p' );
 
 	const rootDirectory = getRandomTemporaryPath();
 	const performanceTestDirectory = rootDirectory + '/tests';
