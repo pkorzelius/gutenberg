@@ -1,6 +1,7 @@
 /**
  * External dependencies
  */
+const cluster = require( 'cluster' );
 const fs = require( 'fs' );
 const os = require( 'os' );
 const path = require( 'path' );
@@ -194,19 +195,25 @@ async function runTestSuite( testSuite, performanceTestDirectory ) {
  * @param {WPPerformanceCommandOptions} options  Command options.
  */
 async function runPerformanceTests( branches, options ) {
-	let lastCpuReport = process.hrtime();
+	let worker;
 
-	const reportCpuUsage = () => {
-		lastCpuReport = process.hrtime( lastCpuReport );
-		const [ s, ns ] = lastCpuReport;
-		if ( s > 5 ) {
-			log( '*****' + JSON.stringify( [ s + ns / 1e9, os.cpus() ] ) );
-		}
+	if ( cluster.isMaster ) {
+		worker = cluster.fork();
+	} else {
+		// eslint-disable-next-line no-restricted-syntax
+		const threadId = Math.random();
+		const reportCpuUsage = () => {
+			const [ s, ns ] = process.hrtime();
+			log(
+				'*****' +
+					JSON.stringify( [ threadId, s + ns / 1e9, os.cpus() ] )
+			);
 
-		setTimeout( reportCpuUsage, 10000 );
-	};
+			setTimeout( reportCpuUsage, 1000 );
+		};
 
-	reportCpuUsage();
+		reportCpuUsage();
+	}
 
 	// The default value doesn't work because commander provides an array.
 	if ( branches.length === 0 ) {
@@ -467,6 +474,8 @@ async function runPerformanceTests( branches, options ) {
 			JSON.stringify( results[ testSuite ], null, 2 )
 		);
 	}
+
+	worker.kill();
 }
 
 module.exports = {
