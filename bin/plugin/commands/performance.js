@@ -239,6 +239,9 @@ async function runPerformanceTests( branches, options ) {
 
 	// 2- Preparing the environment directories per branch.
 	log( '\n>> Preparing an environment directory per branch' );
+	for ( const ref of refs ) {
+		log( `\n    >> - ${ ref }` );
+	}
 	const branchDirectories = {};
 	for ( const ref of refs ) {
 		log( '    >> Branch: ' + ref );
