@@ -218,11 +218,13 @@ async function runPerformanceTests( branches, options ) {
 		.raw( 'init' )
 		.raw( 'remote', 'add', 'origin', config.gitRepositoryURL );
 
-	for ( const ref of refs ) {
-		await git.raw( 'fetch', '--depth=2', 'origin', ref );
-	}
+	// for ( const ref of refs ) {
+	// 	await git.raw( 'fetch', '--depth=2', 'origin', ref );
+	// }
+	await git.raw( 'fetch' );
 
 	await git.raw( 'checkout', refs[ 0 ] );
+	await git.raw( 'pull', '-p' );
 
 	const rootDirectory = getRandomTemporaryPath();
 	const performanceTestDirectory = rootDirectory + '/tests';
