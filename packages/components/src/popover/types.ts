@@ -141,12 +141,13 @@ export type PopoverProps = {
 	 * - 'unstyled':  The popover is essentially without any visible style, it
 	 *                has no background, border, outline or drop shadow, but
 	 *                the popover contents are still displayed.
-	 * - 'alternate': A style that has no elevation, but a high contrast with
-	 *                other elements.
+	 * - 'toolbar':   A style that has no elevation, but a high contrast with
+	 *                other elements. This is matches the style of the
+	 *                `Toolbar` component.
 	 *
 	 * @default undefined
 	 */
-	variant?: 'unstyled' | 'alternate';
+	variant?: 'unstyled' | 'toolbar';
 	// Deprecated props
 	/**
 	 * Prevent the popover from flipping and resizing when meeting the viewport
@@ -195,7 +196,7 @@ export type PopoverProps = {
 	/**
 	 * Used to enable a different visual style for the popover.
 	 * _Note: this prop is deprecated. Use the `variant` prop with the
-	 * 'alternate' value instead._
+	 * 'toolbar' value instead._
 	 *
 	 * @deprecated
 	 */

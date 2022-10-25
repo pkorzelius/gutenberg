@@ -253,15 +253,12 @@ const UnforwardedPopover = (
 		} );
 	}
 
-	let computedVariant = variant;
+	const computedVariant = isAlternate === true ? 'toolbar' : variant;
 	if ( isAlternate !== undefined ) {
 		deprecated( '`isAlternate` prop in wp.components.Popover', {
 			since: '6.2',
-			version: '6.4',
-			alternative: '`variant` prop with the `alternate` value',
+			alternative: "`variant` prop with the `'toolbar'` value",
 		} );
-
-		computedVariant = isAlternate ? 'alternate' : computedVariant;
 	}
 
 	const arrowRef = useRef( null );
@@ -488,7 +485,12 @@ const UnforwardedPopover = (
 			placement={ computedPlacement }
 			className={ classnames( 'components-popover', className, {
 				'is-expanded': isExpanded,
-				[ `is-${ computedVariant }` ]: !! computedVariant,
+				// Use the 'alternate' classname for 'toolbar' variant for back compat.
+				[ `is-${
+					computedVariant === 'toolbar'
+						? 'alternate'
+						: computedVariant
+				}` ]: !! computedVariant,
 			} ) }
 			{ ...contentProps }
 			ref={ mergedFloatingRef }

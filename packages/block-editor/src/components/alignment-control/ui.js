@@ -30,7 +30,7 @@ const DEFAULT_ALIGNMENT_CONTROLS = [
 
 const POPOVER_PROPS = {
 	position: 'bottom right',
-	variant: 'alternate',
+	variant: 'toolbar',
 };
 
 function AlignmentUI( {

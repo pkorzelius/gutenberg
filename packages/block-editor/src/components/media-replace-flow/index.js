@@ -131,7 +131,7 @@ const MediaReplaceFlow = ( {
 	const gallery = multiple && onlyAllowsImages();
 
 	const POPOVER_PROPS = {
-		variant: 'alternate',
+		variant: 'toolbar',
 	};
 
 	return (

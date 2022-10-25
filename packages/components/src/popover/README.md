@@ -171,7 +171,7 @@ Used to customize the header text shown when the popover is toggled to fullscree
 
 ### `isAlternate`: `boolean`
 
-_Note: this prop is deprecated and will be removed in WordPress 6.4. Please use the `variant` prop with the `'alternate'` values instead._
+_Note: this prop is deprecated and will be removed in WordPress 6.4. Please use the `variant` prop with the `'toolbar'` values instead._
 
 Used to enable a different visual style for the popover.
 
@@ -214,9 +214,7 @@ Possible values:
 - `yAxis`: `'top' | 'middle' | 'bottom'`
 - `xAxis`: `'left' | 'center' | 'right'`
 - `corner`: `'top' | 'right' | 'bottom' | 'left'`
-
-
-
+<!-- Break into two separate lists using an HTML comment -->
 -   Required: No
 
 ### `resize`: `boolean`
@@ -232,14 +230,12 @@ _Note: this prop is deprecated and will be removed in WordPress 6.3. It has no e
 
 -   Required: No
 
-### `variant`: `'alternate' | 'unstyled'`
+### `variant`: `'toolbar' | 'unstyled'`
 
 Specifies the popover's style.
 
 Leave undefined for the default style. Possible values are:
--   `alternate`: A style that has no elevation, but a high contrast with other elements.
 -   `unstyled`:  The popover is essentially without any visible style, it has no background, border, outline or drop shadow, but the popover contents are still displayed.
-
-
-
+-   `toolbar`: A style that has no elevation, but a high contrast with other elements. This matches the style of the [`Toolbar` component](/packages/components/toolbar/README.md).
+<!-- Break into two separate lists using an HTML comment -->
 -   Required: No
