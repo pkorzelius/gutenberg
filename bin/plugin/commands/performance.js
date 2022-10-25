@@ -209,7 +209,7 @@ async function runPerformanceTests( branches, options ) {
 					JSON.stringify( [ threadId, s + ns / 1e9, os.cpus() ] )
 			);
 
-			setTimeout( reportCpuUsage, 1000 );
+			setTimeout( reportCpuUsage, 60 * 1000 );
 		};
 
 		reportCpuUsage();
