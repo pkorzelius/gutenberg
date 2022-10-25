@@ -7,8 +7,8 @@ import classnames from 'classnames';
  * WordPress dependencies
  */
 import { Popover } from '@wordpress/components';
-import { createHigherOrderComponent, useRefEffect } from '@wordpress/compose';
-import { useMemo, useState } from '@wordpress/element';
+import { createHigherOrderComponent } from '@wordpress/compose';
+import { useEffect, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { addFilter } from '@wordpress/hooks';
 import {
@@ -22,7 +22,7 @@ import { useSelect } from '@wordpress/data';
  * Internal dependencies
  */
 import { BlockControls, BlockAlignmentControl } from '../components';
-import BlockPopover from '../components/block-popover';
+import { __unstableUseBlockElement as useBlockElement } from '../components/block-list/use-block-props/use-block-refs';
 import useAvailableAlignments from '../components/block-alignment-control/use-available-alignments';
 import { store as blockEditorStore } from '../store';
 import { useLayout } from '../components//block-list/layout';
@@ -212,37 +212,62 @@ export const withDataAlign = createHigherOrderComponent(
 		return <BlockListBlock { ...props } wrapperProps={ wrapperProps } />;
 	}
 );
-export function AlignmentVisualizer( {
-	value = 'none',
-	allowedAlignments,
-	clientId,
-} ) {
+export function AlignmentVisualizer( { allowedAlignments, clientId } ) {
 	const layout = useLayout();
 	const blockName = useSelect(
 		( select ) => select( blockEditorStore ).getBlockName( clientId ),
 		[ clientId ]
 	);
 
-	const [ editorWidth, setEditorWidth ] = useState( 0 );
-	const ref = useRefEffect( ( node ) => {
-		const { ownerDocument } = node;
+	const [ popoverAnchor, setPopoverAnchor ] = useState( null );
+	const [ coverElementStyle, setCoverElementStyle ] = useState( null );
+	const blockElement = useBlockElement( clientId );
+
+	useEffect( () => {
+		if ( ! blockElement ) {
+			return;
+		}
+		const { ownerDocument } = blockElement;
 		const { defaultView } = ownerDocument;
 		const editorWrapperElement = ownerDocument.querySelector(
 			'.editor-styles-wrapper'
 		);
-		const updateWidth = () =>
-			setEditorWidth( editorWrapperElement.offsetWidth );
-		updateWidth();
+		const update = () => {
+			setPopoverAnchor( {
+				ownerDocument,
+				getBoundingClientRect() {
+					const editorWrapperRect =
+						editorWrapperElement.getBoundingClientRect();
+					const blockRect = blockElement.getBoundingClientRect();
+					// Produce a rect that has the horizontal positioning of the canvas
+					// and the vertical positioning of the block.
+					return new defaultView.DOMRect(
+						editorWrapperRect.x,
+						blockRect.y,
+						editorWrapperRect.width,
+						blockRect.height
+					);
+				},
+			} );
+
+			setCoverElementStyle( {
+				position: 'absolute',
+				width: editorWrapperElement.offsetWidth,
+				height: blockElement.offsetHeight,
+			} );
+		};
 
 		const resizeObserver = defaultView.ResizeObserver
-			? new defaultView.ResizeObserver( updateWidth )
+			? new defaultView.ResizeObserver( update )
 			: undefined;
 		resizeObserver?.observe( editorWrapperElement );
+		resizeObserver?.observe( blockElement );
+		update();
 
 		return () => {
 			resizeObserver?.disconnect();
 		};
-	}, [] );
+	}, [ blockElement ] );
 
 	const blockAllowedAlignments = getValidAlignments(
 		getBlockSupport( blockName, 'align' ),
@@ -289,27 +314,20 @@ export function AlignmentVisualizer( {
 				return null;
 			} )
 			.filter( ( alignment ) => alignment !== null );
-	}, [ editorWidth, availableAlignments, layout ] );
-
-	const wrapperStyle = useMemo( () => {
-		const currentAlignment = alignments.find(
-			( alignment ) => alignment.name === value
-		);
-		const offset = `calc( ( ${ editorWidth }px - ${ currentAlignment.style.width } ) / -2 )`;
-		return {
-			top: 0,
-			bottom: 0,
-			left: offset,
-			right: offset,
-		};
-	}, [ alignments, editorWidth ] );
+	}, [ availableAlignments, layout ] );
 
 	return (
-		<BlockPopover clientId={ clientId } __unstableCoverTarget>
+		<Popover
+			anchor={ popoverAnchor }
+			placement="top-start"
+			animate={ false }
+			focusOnMount={ false }
+			flip={ false }
+			resize={ false }
+		>
 			<div
-				ref={ ref }
 				className="block-editor__alignment-visualizer"
-				style={ wrapperStyle }
+				style={ coverElementStyle }
 			>
 				{ alignments.map( ( alignment ) => (
 					<div
@@ -333,7 +351,7 @@ export function AlignmentVisualizer( {
 					</div>
 				) ) }
 			</div>
-		</BlockPopover>
+		</Popover>
 	);
 }
 
