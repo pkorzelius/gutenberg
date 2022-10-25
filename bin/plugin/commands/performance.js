@@ -475,7 +475,7 @@ async function runPerformanceTests( branches, options ) {
 		);
 	}
 
-	worker.kill();
+	worker?.kill();
 }
 
 module.exports = {
