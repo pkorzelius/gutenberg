@@ -16,7 +16,6 @@ const {
 	askForConfirmation,
 	getRandomTemporaryPath,
 } = require( '../lib/utils' );
-const config = require( '../config' );
 
 /**
  * @typedef WPPerformanceCommandOptions
@@ -179,7 +178,7 @@ async function runPerformanceTests( branches, options ) {
 	const runningInCI = !! process.env.CI || !! options.ci;
 	const inferTestBranches = runningInCI && ! branchesWereSpecified;
 	const mergeRef = process.env.GITHUB_SHA;
-	const baseRef = process.env.GITHUB_BASE_REF;
+	const clonePath = process.env.GITHUB_WORKSPACE;
 
 	// The default value doesn't work because commander provides an array.
 	if ( branches.length === 0 ) {
@@ -201,27 +200,23 @@ async function runPerformanceTests( branches, options ) {
 	log( '\n>> Preparing the tests directories' );
 	log( '    >> Cloning the repository' );
 
-	const refs = inferTestBranches ? [ mergeRef, baseRef ] : branches;
-
-	if ( refs.length <= 0 ) {
-		throw new Error(
-			`Need at least two git refs to run: given ${ refs.join( ', ' ) }`
-		);
-	}
-
 	const baseDirectory = getRandomTemporaryPath();
 	fs.mkdirSync( baseDirectory, { recursive: true } );
 	await runShellScript( `cd ${ baseDirectory }` );
 
 	// @ts-ignore
 	const git = SimpleGit( baseDirectory );
-	await git
-		.raw( 'init' )
-		.raw( 'remote', 'add', 'origin', config.gitRepositoryURL );
+	await git.raw( 'init' ).raw( 'remote', 'add', 'origin', clonePath );
 
-	for ( const ref of refs ) {
-		await git.raw( 'fetch', '--depth=1', 'origin', ref );
+	if ( ! inferTestBranches ) {
+		for ( const branch of branches ) {
+			await git.raw( 'fetch', '--depth=1', 'origin', branch );
+		}
 	}
+
+	const refs = inferTestBranches
+		? [ mergeRef, await git.raw( 'rev-parse', 'HEAD~' ) ]
+		: branches;
 
 	await git.raw( 'checkout', refs[ 0 ] );
 
