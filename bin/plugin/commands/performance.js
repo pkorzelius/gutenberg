@@ -204,9 +204,9 @@ async function runPerformanceTests( branches, options ) {
 	fs.mkdirSync( baseDirectory, { recursive: true } );
 	await runShellScript( `cd ${ baseDirectory }` );
 
-	await runShellScript( `cp -R ${ clonePath } ${ baseDirectory }` );
 	// @ts-ignore
 	const git = SimpleGit( baseDirectory );
+	await git.raw( 'init' ).raw( 'remote', 'add', 'origin', clonePath ).fetch();
 
 	if ( ! inferTestBranches ) {
 		for ( const branch of branches ) {
