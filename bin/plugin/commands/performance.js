@@ -219,8 +219,7 @@ async function runPerformanceTests( branches, options ) {
 				mergeRef,
 				await git
 					.raw( 'fetch', '--depth=2', 'origin', mergeRef )
-					.raw( 'checkout', mergeRef )
-					.raw( 'rev-parse', 'HEAD~1' ),
+					.raw( 'rev-parse', `${ mergeRef }~1` ),
 		  ]
 		: branches;
 
