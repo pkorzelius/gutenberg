@@ -12,7 +12,7 @@ import { store as coreStore } from '@wordpress/core-data';
 import { store as editSiteStore } from '../../../store';
 import TemplateActions from './template-actions';
 import TemplateAreas from './template-areas';
-import LastRevision from '../last-revision';
+import LastRevision from './last-revision';
 
 export default function TemplateCard() {
 	const {
