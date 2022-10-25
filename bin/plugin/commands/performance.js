@@ -161,8 +161,9 @@ async function setUpGitBranch( branch, environmentDirectory ) {
 	await git.checkoutRemoteBranch( environmentDirectory, branch );
 
 	log( '        >> Building the ' + formats.success( branch ) + ' branch' );
+	await runShellScript( 'npm ci', environmentDirectory );
 	await runShellScript(
-		'npm ci && npm node ./bin/packages/build.js',
+		'npm node ./bin/packages/build.js',
 		environmentDirectory
 	);
 }
