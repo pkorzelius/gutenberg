@@ -163,7 +163,7 @@ async function setUpGitBranch( branch, environmentDirectory ) {
 	log( '        >> Building the ' + formats.success( branch ) + ' branch' );
 	await runShellScript( 'npm ci', environmentDirectory );
 	await runShellScript(
-		'npm node ./bin/packages/build.js',
+		'node ./bin/packages/build.js',
 		environmentDirectory
 	);
 }
