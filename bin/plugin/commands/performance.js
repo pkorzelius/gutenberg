@@ -213,6 +213,7 @@ async function runPerformanceTests( branches, options ) {
 	fs.mkdirSync( baseDirectory, { recursive: true } );
 	runShellScript( `cd ${ baseDirectory }` );
 
+	// @ts-ignore
 	const git = SimpleGit( baseDirectory );
 	await git
 		.raw( 'init' )
@@ -257,6 +258,7 @@ async function runPerformanceTests( branches, options ) {
 		);
 
 		log( '        >> Fetching the ' + formats.success( ref ) + ' ref' );
+		// @ts-ignore
 		const refGit = SimpleGit( `${ environmentDirectory }/plugin` );
 		await refGit.reset( 'hard' ).checkout( ref );
 
@@ -313,6 +315,7 @@ async function runPerformanceTests( branches, options ) {
 	for ( const ref of refs ) {
 		log(
 			`>> Environment Directory (${ ref }) : ${ formats.success(
+				// @ts-ignore
 				branchDirectories[ ref ]
 			) }`
 		);
@@ -342,6 +345,7 @@ async function runPerformanceTests( branches, options ) {
 					environmentDirectory
 				);
 				log( '        >> Running the test.' );
+				// @ts-ignore
 				rawResults[ i ][ ref ] = await runTestSuite(
 					testSuite,
 					performanceTestDirectory
@@ -359,57 +363,82 @@ async function runPerformanceTests( branches, options ) {
 			const medians = mapValues(
 				{
 					serverResponse: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].serverResponse
 					),
+					// @ts-ignore
 					firstPaint: rawResults.map( ( r ) => r[ ref ].firstPaint ),
 					domContentLoaded: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].domContentLoaded
 					),
+					// @ts-ignore
 					loaded: rawResults.map( ( r ) => r[ ref ].loaded ),
 					firstContentfulPaint: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].firstContentfulPaint
 					),
+					// @ts-ignore
 					firstBlock: rawResults.map( ( r ) => r[ ref ].firstBlock ),
+					// @ts-ignore
 					type: rawResults.map( ( r ) => r[ ref ].type ),
+					// @ts-ignore
 					minType: rawResults.map( ( r ) => r[ ref ].minType ),
+					// @ts-ignore
 					maxType: rawResults.map( ( r ) => r[ ref ].maxType ),
+					// @ts-ignore
 					focus: rawResults.map( ( r ) => r[ ref ].focus ),
+					// @ts-ignore
 					minFocus: rawResults.map( ( r ) => r[ ref ].minFocus ),
+					// @ts-ignore
 					maxFocus: rawResults.map( ( r ) => r[ ref ].maxFocus ),
+					// @ts-ignore
 					inserterOpen: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].inserterOpen
 					),
 					minInserterOpen: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].minInserterOpen
 					),
 					maxInserterOpen: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].maxInserterOpen
 					),
 					inserterSearch: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].inserterSearch
 					),
 					minInserterSearch: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].minInserterSearch
 					),
 					maxInserterSearch: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].maxInserterSearch
 					),
 					inserterHover: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].inserterHover
 					),
 					minInserterHover: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].minInserterHover
 					),
 					maxInserterHover: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].maxInserterHover
 					),
 					listViewOpen: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].listViewOpen
 					),
 					minListViewOpen: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].minListViewOpen
 					),
 					maxListViewOpen: rawResults.map(
+						// @ts-ignore
 						( r ) => r[ ref ].maxListViewOpen
 					),
 				},
@@ -417,6 +446,7 @@ async function runPerformanceTests( branches, options ) {
 			);
 
 			// Format results as times.
+			// @ts-ignore
 			results[ testSuite ][ ref ] = mapValues( medians, formatTime );
 		}
 	}
