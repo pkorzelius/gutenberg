@@ -215,7 +215,12 @@ async function runPerformanceTests( branches, options ) {
 	}
 
 	const refs = inferTestBranches
-		? [ mergeRef, await git.raw( 'rev-parse', 'HEAD~' ) ]
+		? [
+				mergeRef,
+				await git
+					.raw( 'checkout', mergeRef )
+					.raw( 'rev-parse', 'HEAD~1' ),
+		  ]
 		: branches;
 
 	await git.raw( 'checkout', refs[ 0 ] );
