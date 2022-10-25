@@ -208,20 +208,11 @@ async function runPerformanceTests( branches, options ) {
 	const git = SimpleGit( baseDirectory );
 	await git.raw( 'init' ).raw( 'remote', 'add', 'origin', clonePath );
 
-	if ( ! inferTestBranches ) {
-		for ( const branch of branches ) {
-			await git.raw( 'fetch', '--depth=1', 'origin', branch );
-		}
-	}
+	const refs = inferTestBranches ? [ mergeRef, `${ mergeRef }~1` ] : branches;
 
-	const refs = inferTestBranches
-		? [
-				mergeRef,
-				await git
-					.raw( 'fetch', '--depth=2', 'origin', mergeRef )
-					.raw( 'rev-parse', `${ mergeRef }~1` ),
-		  ]
-		: branches;
+	for ( const branch of branches ) {
+		await git.raw( 'fetch', '--deepen=1', 'origin', branch );
+	}
 
 	await git.raw( 'checkout', refs[ 0 ] );
 
