@@ -253,7 +253,7 @@ const UnforwardedPopover = (
 		} );
 	}
 
-	const computedVariant = isAlternate === true ? 'toolbar' : variant;
+	const computedVariant = isAlternate ? 'toolbar' : variant;
 	if ( isAlternate !== undefined ) {
 		deprecated( '`isAlternate` prop in wp.components.Popover', {
 			since: '6.2',
