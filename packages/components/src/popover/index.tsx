@@ -490,7 +490,7 @@ const UnforwardedPopover = (
 					computedVariant === 'toolbar'
 						? 'alternate'
 						: computedVariant
-				}` ]: !! computedVariant,
+				}` ]: computedVariant,
 			} ) }
 			{ ...contentProps }
 			ref={ mergedFloatingRef }
