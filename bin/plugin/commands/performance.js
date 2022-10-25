@@ -220,11 +220,10 @@ async function runPerformanceTests( branches, options ) {
 		.raw( 'remote', 'add', 'origin', config.gitRepositoryURL );
 
 	for ( const ref of refs ) {
-		await git.raw( 'fetch', 'origin', ref );
+		await git.raw( 'fetch', '--depth=1', 'origin', ref );
 	}
 
 	await git.raw( 'checkout', refs[ 0 ] );
-	await git.raw( 'fetch' );
 
 	const rootDirectory = getRandomTemporaryPath();
 	const performanceTestDirectory = rootDirectory + '/tests';
@@ -259,11 +258,13 @@ async function runPerformanceTests( branches, options ) {
 
 		log( '        >> Fetching the ' + formats.success( ref ) + ' ref' );
 		// @ts-ignore
-		const refGit = SimpleGit( `${ environmentDirectory }/plugin` );
-		await refGit.reset( 'hard' ).checkout( ref );
+		await SimpleGit( `${ environmentDirectory }/plugin` ).checkout( ref );
 
 		log( '        >> Building the ' + formats.success( ref ) + ' ref' );
-		await runShellScript( 'npm ci && npm run build', environmentDirectory );
+		await runShellScript(
+			'npm ci && npm run build',
+			environmentDirectory + '/plugin'
+		);
 
 		await runShellScript(
 			'cp ' +
