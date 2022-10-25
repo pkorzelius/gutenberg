@@ -176,7 +176,7 @@ async function runTestSuite( testSuite, performanceTestDirectory ) {
  */
 async function runPerformanceTests( branches, options ) {
 	const branchesWereSpecified = branches?.length > 0;
-	const runningInCI = !! process.env.CI;
+	const runningInCI = !! process.env.CI || !! options.ci;
 	const inferTestBranches = runningInCI && ! branchesWereSpecified;
 	const mergeRef = process.env.GITHUB_SHA;
 	const baseRef = process.env.GITHUB_BASE_REF;
@@ -211,7 +211,7 @@ async function runPerformanceTests( branches, options ) {
 
 	const baseDirectory = getRandomTemporaryPath();
 	fs.mkdirSync( baseDirectory, { recursive: true } );
-	runShellScript( `cd ${ baseDirectory }` );
+	await runShellScript( `cd ${ baseDirectory }` );
 
 	// @ts-ignore
 	const git = SimpleGit( baseDirectory );
@@ -241,9 +241,6 @@ async function runPerformanceTests( branches, options ) {
 
 	// 2- Preparing the environment directories per branch.
 	log( '\n>> Preparing an environment directory per branch' );
-	for ( const ref of refs ) {
-		log( `\n    >> - ${ ref }` );
-	}
 	const branchDirectories = {};
 	for ( const ref of refs ) {
 		log( '    >> Branch: ' + ref );
@@ -258,7 +255,9 @@ async function runPerformanceTests( branches, options ) {
 
 		log( '        >> Fetching the ' + formats.success( ref ) + ' ref' );
 		// @ts-ignore
-		await SimpleGit( `${ environmentDirectory }/plugin` ).checkout( ref );
+		await SimpleGit( `${ environmentDirectory }/plugin` )
+			.reset( 'hard' )
+			.checkout( ref );
 
 		log( '        >> Building the ' + formats.success( ref ) + ' ref' );
 		await runShellScript(
