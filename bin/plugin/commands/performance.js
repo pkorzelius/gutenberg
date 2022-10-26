@@ -210,9 +210,9 @@ async function runPerformanceTests( branches, options ) {
 
 	const refs = inferTestBranches ? [ mergeRef, `${ mergeRef }~1` ] : branches;
 
-	for ( const ref of refs ) {
-		await git.raw( 'fetch', '--deepen=2', 'origin', ref );
-	}
+	// for ( const ref of refs ) {
+	// 	await git.raw( 'fetch', '--deepen=2', 'origin', ref );
+	// }
 
 	await git.raw( 'checkout', refs[ 0 ] );
 
