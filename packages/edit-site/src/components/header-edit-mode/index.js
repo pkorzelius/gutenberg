@@ -41,11 +41,7 @@ const preventDefault = ( event ) => {
 	event.preventDefault();
 };
 
-export default function Header( {
-	openEntitiesSavedStates,
-	isEntitiesSavedStatesOpen,
-	showIconLabels,
-} ) {
+export default function Header( { showIconLabels } ) {
 	const inserterButton = useRef();
 	const {
 		deviceType,
@@ -217,6 +213,8 @@ export default function Header( {
 							<PreviewOptions
 								deviceType={ deviceType }
 								setDeviceType={ setPreviewDeviceType }
+								/* translators: button label text should, if possible, be under 16 characters. */
+								viewLabel={ __( 'View' ) }
 							>
 								<MenuGroup>
 									<MenuItem
@@ -236,10 +234,7 @@ export default function Header( {
 							</PreviewOptions>
 						</div>
 					) }
-					<SaveButton
-						openEntitiesSavedStates={ openEntitiesSavedStates }
-						isEntitiesSavedStatesOpen={ isEntitiesSavedStatesOpen }
-					/>
+					<SaveButton />
 					<PinnedItems.Slot scope="core/edit-site" />
 					<MoreMenu showIconLabels={ showIconLabels } />
 				</div>
