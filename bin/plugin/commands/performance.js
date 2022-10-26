@@ -206,7 +206,7 @@ async function runPerformanceTests( branches, options ) {
 
 	// @ts-ignore
 	const git = SimpleGit( baseDirectory );
-	await git.raw( 'init' ).raw( 'remote', 'add', 'origin', clonePath );
+	await git.raw( 'init' ).raw( 'remote', 'add', 'origin', clonePath ).fetch();
 
 	const refs = inferTestBranches ? [ mergeRef, `${ mergeRef }~1` ] : branches;
 
@@ -214,6 +214,7 @@ async function runPerformanceTests( branches, options ) {
 	// 	await git.raw( 'fetch', '--deepen=2', 'origin', ref );
 	// }
 
+	await git.raw( 'fetch', '--deepen=2', 'origin', refs[ 0 ] );
 	await git.raw( 'checkout', refs[ 0 ] );
 
 	const rootDirectory = getRandomTemporaryPath();
