@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { render, fireEvent, screen } from '@testing-library/react';
+import { act, render, fireEvent, screen } from '@testing-library/react';
 
 /**
  * Internal dependencies
@@ -41,7 +41,7 @@ describe( 'FontSizePicker', () => {
 				selector: 'input',
 			} );
 
-			input.focus();
+			act( () => input.focus() );
 			fireEvent.change( input, { target: { value: 16 } } );
 
 			expect( unitSelect ).toBeFalsy();
@@ -69,7 +69,7 @@ describe( 'FontSizePicker', () => {
 				selector: 'input',
 			} );
 
-			input.focus();
+			act( () => input.focus() );
 			fireEvent.change( input, { target: { value: 16 } } );
 
 			expect( unitSelect ).toBeTruthy();
@@ -106,7 +106,7 @@ describe( 'FontSizePicker', () => {
 				selector: 'input',
 			} );
 
-			input.focus();
+			act( () => input.focus() );
 			fireEvent.change( input, { target: { value: 16 } } );
 
 			expect( unitSelect ).toBeFalsy();
@@ -143,7 +143,7 @@ describe( 'FontSizePicker', () => {
 				selector: 'input',
 			} );
 
-			input.focus();
+			act( () => input.focus() );
 			fireEvent.change( input, { target: { value: 16 } } );
 
 			expect( unitSelect ).toBeTruthy();

@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { render, fireEvent, screen } from '@testing-library/react';
+import { act, render, fireEvent, screen } from '@testing-library/react';
 
 /**
  * WordPress dependencies
@@ -91,7 +91,7 @@ describe( 'ToggleGroupControl', () => {
 
 		expect( mockOnChange ).toHaveBeenCalledWith( 'rigas' );
 	} );
-	it( 'should render tooltip where `showTooltip` === `true`', () => {
+	it( 'should render tooltip where `showTooltip` === `true`', async () => {
 		render(
 			<ToggleGroupControl label="Test Toggle Group Control">
 				{ optionsWithTooltip }
@@ -102,7 +102,7 @@ describe( 'ToggleGroupControl', () => {
 			'Click for Delicious Gnocchi'
 		);
 
-		fireEvent.focus( firstRadio );
+		await act( () => firstRadio.focus() );
 
 		expect(
 			screen.getByText( 'Click for Delicious Gnocchi' )
