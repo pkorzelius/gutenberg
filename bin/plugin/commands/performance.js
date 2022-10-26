@@ -214,7 +214,7 @@ async function runPerformanceTests( branches, options ) {
 	// 	await git.raw( 'fetch', '--deepen=2', 'origin', ref );
 	// }
 
-	await git.raw( 'fetch', '--deepen=2', 'origin', refs[ 0 ] );
+	await git.raw( 'fetch', '--depth=2', 'origin', refs[ 0 ] );
 	await git.raw( 'checkout', refs[ 0 ] );
 
 	const rootDirectory = getRandomTemporaryPath();
