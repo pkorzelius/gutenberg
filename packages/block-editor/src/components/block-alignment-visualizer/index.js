@@ -47,9 +47,9 @@ export default function BlockAlignmentVisualizer( {
 	const rootBlockListElement = useContext(
 		BlockList.__unstableElementContext
 	);
-	const parentElement = parentBlockElement ?? rootBlockListElement;
 
 	useEffect( () => {
+		const parentElement = parentBlockElement ?? rootBlockListElement;
 		if ( ! blockElement || ! parentElement ) {
 			return;
 		}
@@ -95,7 +95,7 @@ export default function BlockAlignmentVisualizer( {
 		return () => {
 			resizeObserver?.disconnect();
 		};
-	}, [ blockElement, parentElement ] );
+	}, [ blockElement, parentBlockElement, rootBlockListElement ] );
 
 	const blockAllowedAlignments = getValidAlignments(
 		getBlockSupport( blockName, 'align' ),
