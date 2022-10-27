@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 
 /**
  * WordPress dependencies
@@ -26,7 +26,7 @@ jest.mock( '@wordpress/core-data' );
 
 describe( 'NavigationToggle', () => {
 	describe( 'when in full screen mode', () => {
-		it( 'should display a user uploaded site icon if it exists', () => {
+		it( 'should display a user uploaded site icon if it exists', async () => {
 			useSelect.mockImplementation( ( cb ) => {
 				return cb( () => ( {
 					getCurrentTemplateNavigationPanelSubMenu: () => 'root',
@@ -39,6 +39,8 @@ describe( 'NavigationToggle', () => {
 			} );
 
 			const { container } = render( <NavigationToggle /> );
+			// wait for `Popover` effects to run
+			await act( () => Promise.resolve() );
 			const siteIcon = container.querySelector(
 				'.edit-site-navigation-toggle__site-icon'
 			);
@@ -46,7 +48,7 @@ describe( 'NavigationToggle', () => {
 			expect( siteIcon ).toBeTruthy();
 		} );
 
-		it( 'should display a default site icon if no user uploaded site icon exists', () => {
+		it( 'should display a default site icon if no user uploaded site icon exists', async () => {
 			useSelect.mockImplementation( ( cb ) => {
 				return cb( () => ( {
 					getCurrentTemplateNavigationPanelSubMenu: () => 'root',
@@ -59,6 +61,8 @@ describe( 'NavigationToggle', () => {
 			} );
 
 			const { container } = render( <NavigationToggle /> );
+			// wait for `Popover` effects to run
+			await act( () => Promise.resolve() );
 			const siteIcon = container.querySelector(
 				'.edit-site-navigation-toggle__site-icon'
 			);
