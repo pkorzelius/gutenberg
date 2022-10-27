@@ -38,10 +38,11 @@ const HANDLE_STYLES_OVERRIDE = {
 };
 
 function ResizableEditor( { enableResizing, settings, children, ...props } ) {
-	const { deviceType, isZoomOutMode } = useSelect(
+	const { deviceType, isZoomOutMode, canvasMode } = useSelect(
 		( select ) => ( {
 			deviceType:
 				select( editSiteStore ).__experimentalGetPreviewDeviceType(),
+			canvasMode: select( editSiteStore ).__unstableGetCanvasMode(),
 			isZoomOutMode:
 				select( blockEditorStore ).__unstableGetEditorMode() ===
 				'zoom-out',
@@ -140,7 +141,12 @@ function ResizableEditor( { enableResizing, settings, children, ...props } ) {
 			} }
 		>
 			<Iframe
-				isZoomedOut={ isZoomOutMode }
+				scale={
+					( isZoomOutMode && 0.45 ) ||
+					( canvasMode === 'view' && 0.8 ) ||
+					undefined
+				}
+				frameSize={ isZoomOutMode ? 100 : undefined }
 				style={ enableResizing ? { height } : deviceStyles }
 				head={
 					<>
