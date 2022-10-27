@@ -8,7 +8,7 @@ import classnames from 'classnames';
  */
 import { Popover } from '@wordpress/components';
 import { createHigherOrderComponent } from '@wordpress/compose';
-import { useEffect, useMemo, useState } from '@wordpress/element';
+import { useContext, useEffect, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { addFilter } from '@wordpress/hooks';
 import {
@@ -21,7 +21,7 @@ import { useSelect } from '@wordpress/data';
 /**
  * Internal dependencies
  */
-import { BlockControls, BlockAlignmentControl } from '../components';
+import { BlockControls, BlockAlignmentControl, BlockList } from '../components';
 import { __unstableUseBlockElement as useBlockElement } from '../components/block-list/use-block-props/use-block-refs';
 import useAvailableAlignments from '../components/block-alignment-control/use-available-alignments';
 import { store as blockEditorStore } from '../store';
@@ -212,39 +212,55 @@ export const withDataAlign = createHigherOrderComponent(
 		return <BlockListBlock { ...props } wrapperProps={ wrapperProps } />;
 	}
 );
+
 export function AlignmentVisualizer( { allowedAlignments, clientId } ) {
 	const layout = useLayout();
-	const blockName = useSelect(
-		( select ) => select( blockEditorStore ).getBlockName( clientId ),
+	const { blockName, parentClientId } = useSelect(
+		( select ) => {
+			const { getBlockName, getBlockRootClientId } =
+				select( blockEditorStore );
+
+			return {
+				blockName: getBlockName( clientId ),
+				parentClientId: getBlockRootClientId( clientId ),
+			};
+		},
 		[ clientId ]
 	);
 
 	const [ popoverAnchor, setPopoverAnchor ] = useState( null );
 	const [ coverElementStyle, setCoverElementStyle ] = useState( null );
 	const blockElement = useBlockElement( clientId );
+	const parentBlockElement = useBlockElement( parentClientId );
+	const rootBlockListElement = useContext(
+		BlockList.__unstableElementContext
+	);
+	const parentElement = parentBlockElement ?? rootBlockListElement;
 
 	useEffect( () => {
-		if ( ! blockElement ) {
+		if ( ! blockElement || ! parentElement ) {
 			return;
 		}
+
 		const { ownerDocument } = blockElement;
 		const { defaultView } = ownerDocument;
-		const editorWrapperElement = ownerDocument.querySelector(
-			'.editor-styles-wrapper'
-		);
+
 		const update = () => {
 			setPopoverAnchor( {
 				ownerDocument,
 				getBoundingClientRect() {
-					const editorWrapperRect =
-						editorWrapperElement.getBoundingClientRect();
+					const parentRect = parentElement.getBoundingClientRect();
 					const blockRect = blockElement.getBoundingClientRect();
-					// Produce a rect that has the horizontal positioning of the canvas
-					// and the vertical positioning of the block.
+
+					// Produce a rect that has:
+					// - the horizontal positioning/height of the parent block.
+					// - the vertical positioning/height of the current block.
+					//
+					// These are the dimensions of our fake 'block list'.
 					return new defaultView.DOMRect(
-						editorWrapperRect.x,
+						parentRect.x,
 						blockRect.y,
-						editorWrapperRect.width,
+						parentRect.width,
 						blockRect.height
 					);
 				},
@@ -252,7 +268,7 @@ export function AlignmentVisualizer( { allowedAlignments, clientId } ) {
 
 			setCoverElementStyle( {
 				position: 'absolute',
-				width: editorWrapperElement.offsetWidth,
+				width: parentElement.offsetWidth,
 				height: blockElement.offsetHeight,
 			} );
 		};
@@ -260,14 +276,14 @@ export function AlignmentVisualizer( { allowedAlignments, clientId } ) {
 		const resizeObserver = defaultView.ResizeObserver
 			? new defaultView.ResizeObserver( update )
 			: undefined;
-		resizeObserver?.observe( editorWrapperElement );
+		resizeObserver?.observe( parentElement );
 		resizeObserver?.observe( blockElement );
 		update();
 
 		return () => {
 			resizeObserver?.disconnect();
 		};
-	}, [ blockElement ] );
+	}, [ blockElement, parentElement ] );
 
 	const blockAllowedAlignments = getValidAlignments(
 		getBlockSupport( blockName, 'align' ),
@@ -288,33 +304,30 @@ export function AlignmentVisualizer( { allowedAlignments, clientId } ) {
 					return {
 						name,
 						label: __( 'Content width' ),
-						style: {
-							width: layout.contentSize,
-						},
 					};
 				}
 				if ( name === 'wide' ) {
 					return {
 						name,
 						label: __( 'Wide width' ),
-						style: {
-							width: layout.wideSize,
-						},
+						className: 'alignwide',
 					};
 				}
 				if ( name === 'full' ) {
 					return {
 						name,
 						label: __( 'Full width' ),
-						style: {
-							width: '100%',
-						},
+						className: 'alignfull',
 					};
 				}
 				return null;
 			} )
 			.filter( ( alignment ) => alignment !== null );
 	}, [ availableAlignments, layout ] );
+
+	if ( availableAlignments?.length === 0 ) {
+		return null;
+	}
 
 	return (
 		<Popover
@@ -332,12 +345,16 @@ export function AlignmentVisualizer( { allowedAlignments, clientId } ) {
 				{ alignments.map( ( alignment ) => (
 					<div
 						key={ alignment.name }
-						className="block-editor__alignment-visualizer-step"
+						className={ classnames(
+							'block-editor__alignment-visualizer-step',
+							'block-editor-block-list__layout',
+							{
+								[ `is-content-justification-${ layout.justifyContent }` ]:
+									layout.justifyContent,
+							}
+						) }
 					>
-						<div
-							className="block-editor__alignment-visualizer-step-inner"
-							style={ alignment.style }
-						>
+						<div className={ classnames( alignment.className ) }>
 							<Popover
 								className="block-editor__alignment-visualizer-step-label-popover"
 								placement="top-end"
