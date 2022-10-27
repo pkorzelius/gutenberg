@@ -210,7 +210,7 @@ describe( 'Basic rendering', () => {
 		const searchInput = getURLInput();
 
 		// Simulate searching for a term.
-		searchInput.focus();
+		fireEvent.focus( searchInput );
 		await user.keyboard( searchTerm );
 
 		expect( screen.queryByText( '://' ) ).not.toBeInTheDocument();
@@ -235,7 +235,6 @@ describe( 'Basic rendering', () => {
 		} );
 
 		it( 'false', async () => {
-			const user = userEvent.setup();
 			const { rerender } = render(
 				<LinkControl value={ { url: 'https://example.com' } } />
 			);
@@ -245,7 +244,8 @@ describe( 'Basic rendering', () => {
 				name: 'Edit',
 			} );
 
-			await user.click( editButton );
+			fireEvent.click( editButton );
+			await act( () => Promise.resolve() );
 
 			expect( getURLInput() ).toBeVisible();
 
@@ -303,7 +303,6 @@ describe( 'Basic rendering', () => {
 		} );
 
 		it( 'should show "Unlink" button if a onRemove handler is provided', async () => {
-			const user = userEvent.setup();
 			const mockOnRemove = jest.fn();
 			render(
 				<LinkControl
@@ -317,7 +316,8 @@ describe( 'Basic rendering', () => {
 			} );
 			expect( unLinkButton ).toBeVisible();
 
-			await user.click( unLinkButton );
+			fireEvent.click( unLinkButton );
+			await act( () => Promise.resolve() );
 
 			expect( mockOnRemove ).toHaveBeenCalled();
 		} );
@@ -344,29 +344,17 @@ describe( 'Searching for a link', () => {
 		const searchInput = getURLInput();
 
 		// Simulate searching for a term.
-		searchInput.focus();
+		act( () => searchInput.focus() );
 		await user.keyboard( searchTerm );
-
-		// fetchFauxEntitySuggestions resolves on next "tick" of event loop.
-		await eventLoopTick();
 
 		const searchResultElements = getSearchResults( container );
 
-		let loadingUI = screen.queryByRole( 'presentation' );
-
 		expect( searchResultElements ).toHaveLength( 0 );
+		expect( screen.queryByRole( 'presentation' ) ).toBeVisible();
 
-		expect( loadingUI ).toBeVisible();
+		await act( () => resolver( fauxEntitySuggestions ) );
 
-		act( () => {
-			resolver( fauxEntitySuggestions );
-		} );
-
-		await eventLoopTick();
-
-		loadingUI = screen.queryByRole( 'presentation' );
-
-		expect( loadingUI ).not.toBeInTheDocument();
+		expect( screen.queryByRole( 'presentation' ) ).not.toBeInTheDocument();
 	} );
 
 	it( 'should display only search suggestions when current input value is not URL-like', async () => {
@@ -380,11 +368,11 @@ describe( 'Searching for a link', () => {
 		const searchInput = getURLInput();
 
 		// Simulate searching for a term.
-		searchInput.focus();
+		act( () => searchInput.focus() );
 		await user.keyboard( searchTerm );
 
-		// fetchFauxEntitySuggestions resolves on next "tick" of event loop.
-		await eventLoopTick();
+		// wait for fetchFauxEntitySuggestions to finish
+		await act( () => Promise.resolve() );
 
 		const searchResultElements = getSearchResults( container );
 
@@ -418,11 +406,11 @@ describe( 'Searching for a link', () => {
 		const searchInput = getURLInput();
 
 		// Simulate searching for a term.
-		searchInput.focus();
+		act( () => searchInput.focus() );
 		await user.keyboard( searchTerm );
 
 		// fetchFauxEntitySuggestions resolves on next "tick" of event loop.
-		await eventLoopTick();
+		await act( () => Promise.resolve() );
 
 		const searchResultTextHighlightElements = Array.from(
 			container.querySelectorAll(
@@ -461,13 +449,13 @@ describe( 'Searching for a link', () => {
 		const searchInput = getURLInput();
 
 		// Simulate searching for a term.
-		searchInput.focus();
+		act( () => searchInput.focus() );
 		await user.keyboard( 'anything' );
 
 		const searchResultElements = getSearchResults( container );
 
 		// fetchFauxEntitySuggestions resolves on next "tick" of event loop.
-		await eventLoopTick();
+		await act( () => Promise.resolve() );
 
 		expect( searchResultElements ).toHaveLength( 0 );
 		expect( mockFetchSearchSuggestions ).not.toHaveBeenCalled();
@@ -486,11 +474,11 @@ describe( 'Searching for a link', () => {
 			const searchInput = getURLInput();
 
 			// Simulate searching for a term.
-			searchInput.focus();
+			act( () => searchInput.focus() );
 			await user.keyboard( searchTerm );
 
 			// fetchFauxEntitySuggestions resolves on next "tick" of event loop.
-			await eventLoopTick();
+			await act( () => Promise.resolve() );
 
 			const searchResultElements = getSearchResults( container );
 
@@ -520,11 +508,11 @@ describe( 'Searching for a link', () => {
 		const searchInput = getURLInput();
 
 		// Simulate searching for a term.
-		searchInput.focus();
+		act( () => searchInput.focus() );
 		await user.keyboard( 'couldbeurlorentitysearchterm' );
 
 		// fetchFauxEntitySuggestions resolves on next "tick" of event loop.
-		await eventLoopTick();
+		await act( () => Promise.resolve() );
 
 		const searchResultElements = getSearchResults( container );
 
@@ -550,11 +538,11 @@ describe( 'Manual link entry', () => {
 			const searchInput = getURLInput();
 
 			// Simulate searching for a term.
-			searchInput.focus();
+			act( () => searchInput.focus() );
 			await user.keyboard( searchTerm );
 
 			// fetchFauxEntitySuggestions resolves on next "tick" of event loop.
-			await eventLoopTick();
+			await act( () => Promise.resolve() );
 
 			const searchResultElements = getSearchResults( container );
 
@@ -591,17 +579,17 @@ describe( 'Manual link entry', () => {
 				expect( submitButton ).toBeDisabled();
 				expect( submitButton ).toBeVisible();
 
-				searchInput.focus();
+				act( () => searchInput.focus() );
 				if ( searchString.length ) {
 					// Simulate searching for a term.
 					await user.keyboard( searchString );
 				} else {
 					// Simulate clearing the search term.
-					await userEvent.clear( searchInput );
+					await user.clear( searchInput );
 				}
 
 				// fetchFauxEntitySuggestions resolves on next "tick" of event loop.
-				await eventLoopTick();
+				await act( () => Promise.resolve() );
 
 				// Attempt to submit the empty search value in the input.
 				await user.keyboard( '[Enter]' );
@@ -635,17 +623,17 @@ describe( 'Manual link entry', () => {
 				expect( submitButton ).toBeVisible();
 
 				// Simulate searching for a term.
-				searchInput.focus();
+				act( () => searchInput.focus() );
 				if ( searchString.length ) {
 					// Simulate searching for a term.
 					await user.keyboard( searchString );
 				} else {
 					// Simulate clearing the search term.
-					await userEvent.clear( searchInput );
+					await user.clear( searchInput );
 				}
 
 				// fetchFauxEntitySuggestions resolves on next "tick" of event loop.
-				await eventLoopTick();
+				await act( () => Promise.resolve() );
 
 				// Attempt to submit the empty search value in the input.
 				await user.click( submitButton );
@@ -677,11 +665,11 @@ describe( 'Manual link entry', () => {
 				const searchInput = getURLInput();
 
 				// Simulate searching for a term.
-				searchInput.focus();
+				act( () => searchInput.focus() );
 				await user.keyboard( searchTerm );
 
 				// fetchFauxEntitySuggestions resolves on next "tick" of event loop.
-				await eventLoopTick();
+				await act( () => Promise.resolve() );
 
 				const searchResultElements = getSearchResults( container );
 
@@ -706,7 +694,8 @@ describe( 'Default search suggestions', () => {
 
 		render( <LinkControl showInitialSuggestions /> );
 
-		await eventLoopTick();
+		// wait for fetchSearchSuggestions to finish
+		await act( () => Promise.resolve() );
 
 		expect(
 			screen.queryByRole( 'listbox', {
@@ -742,7 +731,8 @@ describe( 'Default search suggestions', () => {
 			/>
 		);
 
-		await eventLoopTick();
+		// wait for fetchSearchSuggestions to finish
+		await act( () => Promise.resolve() );
 
 		expect( mockFetchSearchSuggestions ).not.toHaveBeenCalled();
 
@@ -754,9 +744,9 @@ describe( 'Default search suggestions', () => {
 		await user.click( currentLinkBtn );
 
 		const searchInput = getURLInput();
-		searchInput.focus();
 
-		await eventLoopTick();
+		// Wait for search suggestion to get fetched after focus
+		await act( () => searchInput.focus() );
 
 		const searchResultElements = getSearchResults( container );
 
@@ -784,7 +774,7 @@ describe( 'Default search suggestions', () => {
 		searchInput = getURLInput();
 
 		// Simulate searching for a term.
-		searchInput.focus();
+		act( () => searchInput.focus() );
 		await user.keyboard( searchTerm );
 
 		// fetchFauxEntitySuggestions resolves on next "tick" of event loop.
@@ -816,15 +806,19 @@ describe( 'Default search suggestions', () => {
 	} );
 
 	it( 'should not display initial suggestions when there are no recently updated pages/posts', async () => {
-		const noResults = [];
 		// Force API returning empty results for recently updated Pages.
-		mockFetchSearchSuggestions.mockImplementation( () =>
-			Promise.resolve( noResults )
-		);
+		const fetchFinished = new Promise( ( resolve ) => {
+			mockFetchSearchSuggestions.mockImplementation( () => {
+				const result = Promise.resolve( [] );
+				result.then( resolve );
+				return result;
+			} );
+		} );
 
 		const { container } = render( <LinkControl showInitialSuggestions /> );
 
-		await eventLoopTick();
+		// wait for fetchSeachSuggestions to finish
+		await act( () => fetchFinished );
 
 		const searchInput = getURLInput();
 
@@ -860,19 +854,15 @@ describe( 'Creating Entities (eg: Posts, Pages)', () => {
 		async ( entityNameText ) => {
 			const user = userEvent.setup();
 			let resolver;
-			let resolvedEntity;
-
 			const createSuggestion = ( title ) =>
 				new Promise( ( resolve ) => {
-					resolver = ( arg ) => {
-						resolve( arg );
-					};
-					resolvedEntity = {
-						title,
-						id: 123,
-						url: '/?p=123',
-						type: 'page',
-					};
+					resolver = () =>
+						resolve( {
+							title,
+							id: 123,
+							url: '/?p=123',
+							type: 'page',
+						} );
 				} );
 
 			const LinkControlConsumer = () => {
@@ -895,10 +885,8 @@ describe( 'Creating Entities (eg: Posts, Pages)', () => {
 			const searchInput = getURLInput();
 
 			// Simulate searching for a term.
-			searchInput.focus();
+			act( () => searchInput.focus() );
 			await user.keyboard( entityNameText );
-
-			await eventLoopTick();
 
 			const searchResultElements = screen.queryAllByRole( 'option' );
 
@@ -913,8 +901,6 @@ describe( 'Creating Entities (eg: Posts, Pages)', () => {
 			// resolution manually via the `resolver` reference.
 			await user.click( createButton );
 
-			await eventLoopTick();
-
 			// Check for loading indicator.
 			const loadingIndicator = container.querySelector(
 				'.block-editor-link-control__loading'
@@ -925,11 +911,7 @@ describe( 'Creating Entities (eg: Posts, Pages)', () => {
 			expect( loadingIndicator ).toHaveTextContent( 'Creating' );
 
 			// Resolve the `createSuggestion` promise.
-			await act( async () => {
-				resolver( resolvedEntity );
-			} );
-
-			await eventLoopTick();
+			await act( () => resolver() );
 
 			const currentLink = getCurrentLink();
 
@@ -965,10 +947,8 @@ describe( 'Creating Entities (eg: Posts, Pages)', () => {
 		const searchInput = getURLInput();
 
 		// Simulate searching for a term.
-		searchInput.focus();
+		act( () => searchInput.focus() );
 		await user.keyboard( 'Some new page to create' );
-
-		await eventLoopTick();
 
 		// TODO: select these by aria relationship to autocomplete rather than arbitrary selector.
 		const searchResultElements = container.querySelectorAll(
@@ -980,8 +960,6 @@ describe( 'Creating Entities (eg: Posts, Pages)', () => {
 		)[ 0 ];
 
 		await user.click( createButton );
-
-		await eventLoopTick();
 
 		const currentLink = getCurrentLink();
 
@@ -1114,13 +1092,13 @@ describe( 'Creating Entities (eg: Posts, Pages)', () => {
 		it( 'should not show not show an option to create an entity when input is empty', async () => {
 			const { container } = render(
 				<LinkControl
-					showInitialSuggestions={ true } // Should show even if we're not showing initial suggestions.
+					showInitialSuggestions // Should show even if we're not showing initial suggestions.
 					createSuggestion={ jest.fn() }
 				/>
 			);
 
 			// Await the initial suggestions to be fetched.
-			await eventLoopTick();
+			await act( () => Promise.resolve() );
 
 			// Search Input UI.
 			const searchInput = getURLInput();
@@ -1271,7 +1249,6 @@ describe( 'Selecting links', () => {
 	} );
 
 	it( 'should hide "selected" link UI and display search UI prepopulated with previously selected link title when "Change" button is clicked', async () => {
-		const user = userEvent.setup();
 		const selectedLink = fauxEntitySuggestions[ 0 ];
 
 		const LinkControlConsumer = () => {
@@ -1292,7 +1269,8 @@ describe( 'Selecting links', () => {
 		const currentLinkBtn = currentLinkUI.querySelector( 'button' );
 
 		// Simulate searching for a term.
-		await user.click( currentLinkBtn );
+		fireEvent.click( currentLinkBtn );
+		await act( () => Promise.resolve() );
 
 		const searchInput = getURLInput();
 		currentLinkUI = getCurrentLink();
@@ -1470,7 +1448,8 @@ describe( 'Selecting links', () => {
 				<LinkControl showInitialSuggestions />
 			);
 
-			await eventLoopTick();
+			// wait for initial suggestions to be fetched
+			await act( () => Promise.resolve() );
 
 			expect(
 				screen.queryByRole( 'listbox', {
@@ -2019,8 +1998,8 @@ describe( 'Controlling link title text', () => {
 
 		const textInput = screen.queryByRole( 'textbox', { name: 'Text' } );
 
-		textInput.focus();
-		await userEvent.clear( textInput );
+		fireEvent.focus( textInput );
+		await user.clear( textInput );
 		await user.keyboard( textValue );
 
 		expect( textInput ).toHaveValue( textValue );
@@ -2029,7 +2008,8 @@ describe( 'Controlling link title text', () => {
 			name: 'Submit',
 		} );
 
-		await user.click( submitButton );
+		fireEvent.click( submitButton );
+		await act( () => Promise.resolve() );
 
 		expect( mockOnChange ).toHaveBeenCalledWith(
 			expect.objectContaining( {
@@ -2056,8 +2036,8 @@ describe( 'Controlling link title text', () => {
 
 		expect( textInput ).toBeVisible();
 
-		textInput.focus();
-		await userEvent.clear( textInput );
+		fireEvent.focus( textInput );
+		await user.clear( textInput );
 		await user.keyboard( textValue );
 
 		// Attempt to submit the empty search value in the input.

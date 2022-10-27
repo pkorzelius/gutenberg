@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { render, fireEvent } from '@testing-library/react';
+import { act, render, fireEvent } from '@testing-library/react';
 
 /**
  * WordPress dependencies
@@ -47,13 +47,15 @@ describe( 'General media replace flow', () => {
 		expect( mediaReplaceButton ).not.toBeNull();
 	} );
 
-	it( 'renders replace menu', () => {
+	it( 'renders replace menu', async () => {
 		const container = setUpMediaReplaceFlow();
 
 		const mediaReplaceButton = container.querySelector(
 			'button[aria-expanded="false"]'
 		);
-		mediaReplaceButton.click();
+
+		fireEvent.click( mediaReplaceButton );
+		await act( () => Promise.resolve() );
 
 		const uploadMenu = container.querySelector(
 			'.block-editor-media-replace-flow__media-upload-menu'
@@ -62,32 +64,35 @@ describe( 'General media replace flow', () => {
 		expect( uploadMenu ).not.toBeNull();
 	} );
 
-	it( 'displays media URL', () => {
+	it( 'displays media URL', async () => {
 		const container = setUpMediaReplaceFlow();
 
 		const mediaReplaceButton = container.querySelector(
 			'button[aria-expanded="false"]'
 		);
-		mediaReplaceButton.click();
+
+		fireEvent.click( mediaReplaceButton );
+		await act( () => Promise.resolve() );
 
 		const mediaURL = container.querySelector( '.components-external-link' );
 
 		expect( mediaURL.href ).toEqual( 'https://example.media/' );
 	} );
 
-	it( 'edits media URL', () => {
+	it( 'edits media URL', async () => {
 		const container = setUpMediaReplaceFlow();
 
 		const mediaReplaceButton = container.querySelector(
 			'button[aria-expanded="false"]'
 		);
-		mediaReplaceButton.click();
+		fireEvent.click( mediaReplaceButton );
+		await act( () => Promise.resolve() );
 
 		const editMediaURL = container.querySelector(
 			'.block-editor-link-control__search-item-action'
 		);
 
-		editMediaURL.click();
+		fireEvent.click( editMediaURL );
 
 		const mediaURLInput = container.querySelector(
 			'.block-editor-url-input__input'
@@ -101,7 +106,7 @@ describe( 'General media replace flow', () => {
 			'.block-editor-link-control__search-submit'
 		);
 
-		saveMediaURLButton.click();
+		fireEvent.click( saveMediaURLButton );
 
 		const mediaURL = container.querySelector( '.components-external-link' );
 
