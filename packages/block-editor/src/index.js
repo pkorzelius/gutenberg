@@ -3,7 +3,6 @@
  */
 import './hooks';
 export {
-	AlignmentVisualizer as __experimentalAlignmentVisualizer,
 	getBorderClassesAndStyles as __experimentalGetBorderClassesAndStyles,
 	useBorderProps as __experimentalUseBorderProps,
 	getColorClassesAndStyles as __experimentalGetColorClassesAndStyles,
