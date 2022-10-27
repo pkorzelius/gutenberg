@@ -6,17 +6,23 @@ import classnames from 'classnames';
 /**
  * WordPress dependencies
  */
-import { Popover } from '@wordpress/components';
-import { useContext, useEffect, useMemo, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
 import { getBlockSupport, hasBlockSupport } from '@wordpress/blocks';
+import { Popover } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
+import {
+	createPortal,
+	useContext,
+	useEffect,
+	useMemo,
+	useState,
+} from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 
 /**
  * Internal dependencies
  */
 import { BlockList } from '../';
-import { useLayout } from '../block-list/layout';
+import { useLayout, LayoutStyle } from '../block-list/layout';
 import { __unstableUseBlockElement as useBlockElement } from '../block-list/use-block-props/use-block-refs';
 import useAvailableAlignments from '../block-alignment-control/use-available-alignments';
 import { store as blockEditorStore } from '../../store';
@@ -27,14 +33,17 @@ export default function BlockAlignmentVisualizer( {
 	clientId,
 } ) {
 	const layout = useLayout();
-	const { blockName, parentClientId } = useSelect(
+	const { blockName, parentClientId, parentBlockName } = useSelect(
 		( select ) => {
 			const { getBlockName, getBlockRootClientId } =
 				select( blockEditorStore );
 
+			const rootClientId = getBlockRootClientId( clientId );
+
 			return {
 				blockName: getBlockName( clientId ),
-				parentClientId: getBlockRootClientId( clientId ),
+				parentClientId: rootClientId,
+				parentBlockName: getBlockName( rootClientId ),
 			};
 		},
 		[ clientId ]
@@ -150,36 +159,102 @@ export default function BlockAlignmentVisualizer( {
 			flip={ false }
 			resize={ false }
 		>
-			<div
-				className="block-editor__alignment-visualizer"
+			<Iframe
 				style={ coverElementStyle }
+				className="block-editor__alignment-visualizer-iframe"
 			>
-				{ alignments.map( ( alignment ) => (
-					<div
-						key={ alignment.name }
-						className={ classnames(
-							'block-editor__alignment-visualizer-step',
-							'block-editor-block-list__layout',
-							{
-								[ `is-content-justification-${ layout.justifyContent }` ]:
-									layout.justifyContent,
+				<head>
+					<style>
+						{ `
+							html {
+								overflow: hidden;
+								width: 100%;
+								height: 100%;
 							}
-						) }
-					>
-						<div className={ classnames( alignment.className ) }>
-							<Popover
-								className="block-editor__alignment-visualizer-step-label-popover"
-								placement="top-end"
-								flip
+
+							body {
+								position: absolute;
+								margin: 0;
+								top: 0;
+								left: 0;
+								right: 0;
+								bottom: 0;
+							}
+
+							.block-editor__alignment-visualizer-step {
+								position: absolute;
+								top: 0;
+								bottom: 0;
+								left: 0;
+								right: 0;
+							}
+
+							.block-editor__alignment-visualizer-step-inner {
+								pointer-events: none !important;
+								height: 100%;
+								max-width: 100%;
+								margin: 0 auto;
+								opacity: 0.7;
+								border-left: solid 2px blue;
+								border-right: solid 2px blue;
+							}
+						` }
+					</style>
+					<LayoutStyle
+						blockName={ parentBlockName }
+						layout={ layout }
+						selector=".block-editor__alignment-visualizer-step"
+					/>
+				</head>
+				<body className="editor-styles-wrapper">
+					{ alignments.map( ( alignment ) => (
+						<div
+							key={ alignment.name }
+							className={ classnames(
+								'block-editor__alignment-visualizer-step',
+								{
+									[ `is-content-justification-${ layout.justifyContent }` ]:
+										layout.justifyContent,
+								}
+							) }
+						>
+							<div
+								className={ classnames(
+									'block-editor__alignment-visualizer-step-inner',
+									alignment.className
+								) }
 							>
-								<div className="block-editor__alignment-visualizer-step-label">
-									{ alignment.label }
-								</div>
-							</Popover>
+								<Popover
+									className="block-editor__alignment-visualizer-step-label-popover"
+									placement="top-end"
+									flip
+								>
+									<div className="block-editor__alignment-visualizer-step-label">
+										{ alignment.label }
+									</div>
+								</Popover>
+							</div>
 						</div>
-					</div>
-				) ) }
-			</div>
+					) ) }
+				</body>
+			</Iframe>
 		</Popover>
+	);
+}
+
+function Iframe( { children, ...props } ) {
+	const [ ref, setRef ] = useState( null );
+	const iframeDocument = ref?.contentDocument?.documentElement;
+
+	return (
+		<iframe
+			ref={ setRef }
+			// Correct doctype is required to enable rendering in standards mode
+			srcDoc="<!doctype html>"
+			title={ __( 'Alignment visualizer' ) }
+			{ ...props }
+		>
+			{ iframeDocument && createPortal( children, iframeDocument ) }
+		</iframe>
 	);
 }

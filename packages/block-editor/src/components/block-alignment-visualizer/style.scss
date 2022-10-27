@@ -1,3 +1,8 @@
+.block-editor__alignment-visualizer-iframe {
+	pointer-events: none;
+	overflow: hidden;
+}
+
 .block-editor__alignment-visualizer {
 	position: absolute;
 	top: 0;
@@ -18,15 +23,6 @@
 		background-color: var(--wp-admin-theme-color);
 		opacity: 0.1;
 	}
-}
-
-.block-editor__alignment-visualizer-step {
-	pointer-events: none !important;
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	left: 0;
-	right: 0;
 }
 
 .block-editor__alignment-visualizer-step-inner {
