@@ -71,7 +71,8 @@ export default function DroppingInsertionPoint( {
 				opacity.value = 0;
 				blockYPosition.value = 0;
 			}
-		}
+		},
+		[ opacity, blockYPosition ]
 	);
 
 	function getSelectedBlockIndicatorPosition( positions ) {

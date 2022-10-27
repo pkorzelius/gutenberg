@@ -85,12 +85,12 @@ const BlockDraggableWrapper = ( { children, isRTL } ) => {
 	const scroll = {
 		offsetY: useSharedValue( 0 ),
 	};
-	const chip = {
+	const chip = useRef( {
 		x: useSharedValue( 0 ),
 		y: useSharedValue( 0 ),
 		width: useSharedValue( 0 ),
 		height: useSharedValue( 0 ),
-	};
+	} );
 	const currentYPosition = useSharedValue( 0 );
 	const isDragging = useSharedValue( false );
 
@@ -101,13 +101,16 @@ const BlockDraggableWrapper = ( { children, isRTL } ) => {
 		draggingScrollHandler,
 	] = useScrollWhenDragging();
 
-	const scrollHandler = ( event ) => {
-		'worklet';
-		const { contentOffset } = event;
-		scroll.offsetY.value = contentOffset.y;
+	const scrollHandler = useCallback(
+		( event ) => {
+			'worklet';
+			const { contentOffset } = event;
+			scroll.offsetY.value = contentOffset.y;
 
-		draggingScrollHandler( event );
-	};
+			draggingScrollHandler( event );
+		},
+		[ scroll, draggingScrollHandler ]
+	);
 
 	const { onBlockDragOver, onBlockDragEnd, onBlockDrop, targetBlockIndex } =
 		useBlockDropZone();
@@ -121,88 +124,122 @@ const BlockDraggableWrapper = ( { children, isRTL } ) => {
 		};
 	}, [] );
 
-	const setDraggedBlockIconByClientId = ( clientId ) => {
-		const blockName = select( blockEditorStore ).getBlockName( clientId );
-		const blockIcon = getBlockType( blockName )?.icon;
-		if ( blockIcon ) {
-			setDraggedBlockIcon( blockIcon );
-		}
-	};
+	const setDraggedBlockIconByClientId = useCallback(
+		( clientId ) => {
+			const blockName =
+				select( blockEditorStore ).getBlockName( clientId );
+			const blockIcon = getBlockType( blockName )?.icon;
+			if ( blockIcon ) {
+				setDraggedBlockIcon( blockIcon );
+			}
+		},
+		[ setDraggedBlockIcon ]
+	);
 
-	const onStartDragging = ( { clientId, position } ) => {
-		if ( clientId ) {
-			startDraggingBlocks( [ clientId ] );
-			setDraggedBlockIconByClientId( clientId );
-			runOnUI( startScrolling )( position.y );
-			generateHapticFeedback();
-		} else {
-			// We stop dragging if no block is found.
-			runOnUI( stopDragging )();
-		}
-	};
+	const onStartDragging = useCallback(
+		( { clientId, position } ) => {
+			if ( clientId ) {
+				startDraggingBlocks( [ clientId ] );
+				setDraggedBlockIconByClientId( clientId );
+				runOnUI( startScrolling )( position.y );
+				generateHapticFeedback();
+			} else {
+				// We stop dragging if no block is found.
+				runOnUI( stopDragging )();
+			}
+		},
+		[ startDraggingBlocks, setDraggedBlockIconByClientId, stopDragging ]
+	);
 
-	const onStopDragging = ( { clientId } ) => {
-		if ( clientId ) {
-			onBlockDrop( {
-				// Dropping is only allowed at root level
-				srcRootClientId: '',
-				srcClientIds: [ clientId ],
-				type: 'block',
+	const onStopDragging = useCallback(
+		( { clientId } ) => {
+			if ( clientId ) {
+				onBlockDrop( {
+					// Dropping is only allowed at root level
+					srcRootClientId: '',
+					srcClientIds: [ clientId ],
+					type: 'block',
+				} );
+				selectBlock( clientId );
+				setDraggedBlockIcon( undefined );
+			}
+			onBlockDragEnd();
+			stopDraggingBlocks();
+		},
+		[
+			onBlockDrop,
+			selectBlock,
+			setDraggedBlockIcon,
+			onBlockDragEnd,
+			stopDraggingBlocks,
+		]
+	);
+
+	const onChipLayout = useCallback(
+		( { nativeEvent: { layout } } ) => {
+			if ( layout.width > 0 ) {
+				chip.current.width.value = layout.width;
+			}
+			if ( layout.height > 0 ) {
+				chip.current.height.value = layout.height;
+			}
+		},
+		[ chip ]
+	);
+
+	const startDragging = useCallback(
+		( { x, y, id } ) => {
+			'worklet';
+			const dragPosition = { x, y };
+			chip.current.x.value = dragPosition.x;
+			chip.current.y.value = dragPosition.y;
+			currentYPosition.value = dragPosition.y;
+
+			isDragging.value = true;
+
+			runOnJS( onStartDragging )( {
+				clientId: id,
+				position: dragPosition,
 			} );
-			selectBlock( clientId );
-			setDraggedBlockIcon( undefined );
-		}
-		onBlockDragEnd();
-		stopDraggingBlocks();
-	};
+		},
+		[ chip, currentYPosition, isDragging, onStartDragging ]
+	);
 
-	const onChipLayout = ( { nativeEvent: { layout } } ) => {
-		if ( layout.width > 0 ) {
-			chip.width.value = layout.width;
-		}
-		if ( layout.height > 0 ) {
-			chip.height.value = layout.height;
-		}
-	};
+	const updateDragging = useCallback(
+		( { x, y } ) => {
+			'worklet';
+			const dragPosition = { x, y };
+			chip.current.x.value = dragPosition.x;
+			chip.current.y.value = dragPosition.y;
+			currentYPosition.value = dragPosition.y;
 
-	const startDragging = ( { x, y, id } ) => {
-		'worklet';
-		const dragPosition = { x, y };
-		chip.x.value = dragPosition.x;
-		chip.y.value = dragPosition.y;
-		currentYPosition.value = dragPosition.y;
+			runOnJS( onBlockDragOver )( {
+				x,
+				y: y + scroll.offsetY.value,
+			} );
 
-		isDragging.value = true;
+			// Update scrolling velocity
+			scrollOnDragOver( dragPosition.y );
+		},
+		[ chip, currentYPosition, onBlockDragOver, scrollOnDragOver ]
+	);
 
-		runOnJS( onStartDragging )( { clientId: id, position: dragPosition } );
-	};
+	const stopDragging = useCallback(
+		( { id } ) => {
+			'worklet';
+			isDragging.value = false;
 
-	const updateDragging = ( { x, y } ) => {
-		'worklet';
-		const dragPosition = { x, y };
-		chip.x.value = dragPosition.x;
-		chip.y.value = dragPosition.y;
-		currentYPosition.value = dragPosition.y;
-
-		runOnJS( onBlockDragOver )( { x, y: y + scroll.offsetY.value } );
-
-		// Update scrolling velocity
-		scrollOnDragOver( dragPosition.y );
-	};
-
-	const stopDragging = ( { id } ) => {
-		'worklet';
-		isDragging.value = false;
-
-		stopScrolling();
-		runOnJS( onStopDragging )( { clientId: id } );
-	};
+			stopScrolling();
+			runOnJS( onStopDragging )( { clientId: id } );
+		},
+		[ isDragging, stopScrolling, onStopDragging ]
+	);
 
 	const chipDynamicStyles = useAnimatedStyle( () => {
-		const chipOffset = chip.width.value / 2;
+		const chipOffset = chip.current.width.value / 2;
 		const translateX = ! isRTL
-			? chip.x.value - chipOffset
-			: -( contentWidth - ( chip.x.value + chipOffset ) );
+			? chip.current.x.value - chipOffset
+			: -( contentWidth - ( chip.current.x.value + chipOffset ) );
 
 		return {
 			transform: [
@@ -211,8 +248,8 @@ const BlockDraggableWrapper = ( { children, isRTL } ) => {
 				},
 				{
 					translateY:
-						chip.y.value -
-						chip.height.value -
+						chip.current.y.value -
+						chip.current.height.value -
 						CHIP_OFFSET_TO_TOUCH_POSITION,
 				},
 			],
@@ -426,20 +463,22 @@ const BlockDraggable = ( {
 		return children( { isDraggable: false } );
 	}
 
+	const minDuration = Platform.select( {
+		// On iOS, using a lower min duration than the default
+		// value prevents the long-press gesture from being
+		// triggered in underneath elements. This is required to
+		// prevent enabling text editing when dragging is available.
+		ios: canDragBlock
+			? DEFAULT_IOS_LONG_PRESS_MIN_DURATION
+			: DEFAULT_LONG_PRESS_MIN_DURATION,
+		android: DEFAULT_LONG_PRESS_MIN_DURATION,
+	} );
+
 	return (
 		<DraggableTrigger
 			id={ draggingClientId || clientId }
 			enabled={ enabled && canDragBlock }
-			minDuration={ Platform.select( {
-				// On iOS, using a lower min duration than the default
-				// value prevents the long-press gesture from being
-				// triggered in underneath elements. This is required to
-				// prevent enabling text editing when dragging is available.
-				ios: canDragBlock
-					? DEFAULT_IOS_LONG_PRESS_MIN_DURATION
-					: DEFAULT_LONG_PRESS_MIN_DURATION,
-				android: DEFAULT_LONG_PRESS_MIN_DURATION,
-			} ) }
+			minDuration={ minDuration }
 			onLongPress={ onLongPressDraggable }
 			testID={ testID }
 		>

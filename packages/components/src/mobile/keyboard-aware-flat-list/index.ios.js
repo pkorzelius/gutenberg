@@ -34,13 +34,16 @@ export const KeyboardAwareFlatList = ( {
 
 	const latestContentOffsetY = useSharedValue( -1 );
 
-	const scrollHandler = useAnimatedScrollHandler( {
-		onScroll: ( event ) => {
-			const { contentOffset } = event;
-			latestContentOffsetY.value = contentOffset.y;
-			onScroll( event );
+	const scrollHandler = useAnimatedScrollHandler(
+		{
+			onScroll: ( event ) => {
+				const { contentOffset } = event;
+				latestContentOffsetY.value = contentOffset.y;
+				onScroll( event );
+			},
 		},
-	} );
+		[ latestContentOffsetY, onScroll ]
+	);
 
 	const getRef = useCallback(
 		( ref ) => {

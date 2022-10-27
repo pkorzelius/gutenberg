@@ -149,15 +149,15 @@ export default function useBlockDropZone( {
 		200
 	);
 
-	return {
-		onBlockDragOver( event ) {
+	const onBlockDragOver = useCallback(
+		( event ) => {
 			throttled( event );
 		},
-		onBlockDragEnd() {
-			throttled.cancel();
-			targetBlockIndex.value = null;
-		},
-		onBlockDrop: ( event ) => {
+		[ throttled ]
+	);
+
+	const onBlockDropCallback = useCallback(
+		( event ) => {
 			if ( targetBlockIndex.value !== null ) {
 				onBlockDrop( {
 					...event,
@@ -166,6 +166,18 @@ export default function useBlockDropZone( {
 				} );
 			}
 		},
+		[ targetBlockIndex, onBlockDrop ]
+	);
+
+	const onBlockDragEnd = useCallback( () => {
+		throttled.cancel();
+		targetBlockIndex.value = null;
+	}, [ throttled, targetBlockIndex ] );
+
+	return {
+		onBlockDragOver,
+		onBlockDragEnd,
+		onBlockDrop: onBlockDropCallback,
 		targetBlockIndex,
 	};
 }

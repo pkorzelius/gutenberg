@@ -16,7 +16,13 @@ import Animated, {
 /**
  * WordPress dependencies
  */
-import { createContext, useContext, useRef, useMemo } from '@wordpress/element';
+import {
+	createContext,
+	useContext,
+	useRef,
+	useMemo,
+	Platform,
+} from '@wordpress/element';
 
 /**
  * Internal dependencies
@@ -25,6 +31,9 @@ import styles from './style.scss';
 
 const Context = createContext( {} );
 const { Provider } = Context;
+const DEFAULT_LONG_PRESS_MIN_DURATION = 500;
+const DEFAULT_IOS_LONG_PRESS_MIN_DURATION =
+	DEFAULT_LONG_PRESS_MIN_DURATION - 50;
 
 /**
  * Draggable component.
@@ -49,16 +58,15 @@ const Draggable = ( {
 	const isPanActive = useSharedValue( false );
 	const draggingId = useSharedValue( '' );
 	const panGestureRef = useRef();
-	const currentFirstTouchId = useSharedValue( null );
 
-	const initialPosition = {
+	const initialPosition = useRef( {
 		x: useSharedValue( 0 ),
 		y: useSharedValue( 0 ),
-	};
-	const lastPosition = {
+	} );
+	const lastPosition = useRef( {
 		x: useSharedValue( 0 ),
 		y: useSharedValue( 0 ),
-	};
+	} );
 
 	useAnimatedReaction(
 		() => isDragging.value,
@@ -70,75 +78,70 @@ const Draggable = ( {
 			if ( result ) {
 				if ( onDragStart ) {
 					onDragStart( {
-						x: initialPosition.x.value,
-						y: initialPosition.y.value,
+						x: initialPosition.current.x.value,
+						y: initialPosition.current.y.value,
 						id: draggingId.value,
 					} );
 				}
 			} else if ( onDragEnd ) {
 				onDragEnd( {
-					x: lastPosition.x.value,
-					y: lastPosition.y.value,
+					x: lastPosition.current.x.value,
+					y: lastPosition.current.y.value,
 					id: draggingId.value,
 				} );
 			}
-		}
+		},
+		[ initialPosition, lastPosition, draggingId, onDragStart, onDragEnd ]
 	);
 
-	function getFirstTouchEvent( event ) {
-		'worklet';
+	const minDuration = useMemo( () => {
+		return Platform.select( {
+			ios: DEFAULT_IOS_LONG_PRESS_MIN_DURATION,
+			android: DEFAULT_LONG_PRESS_MIN_DURATION,
+		} );
+	}, [
+		DEFAULT_IOS_LONG_PRESS_MIN_DURATION,
+		DEFAULT_LONG_PRESS_MIN_DURATION,
+	] );
 
-		return event.allTouches.find(
-			( touch ) => touch.id === currentFirstTouchId.value
-		);
-	}
+	const panGesture = useMemo( () => {
+		return Gesture.Pan()
+			.activateAfterLongPress( minDuration )
+			.onStart( ( event ) => {
+				const { x = 0, y = 0 } = event;
 
-	const panGesture = Gesture.Pan()
-		.manualActivation( true )
-		.onTouchesDown( ( event ) => {
-			if ( ! currentFirstTouchId.value ) {
-				const firstEvent = event.allTouches[ 0 ];
-				const { x = 0, y = 0 } = firstEvent;
-
-				currentFirstTouchId.value = firstEvent.id;
-
-				initialPosition.x.value = x;
-				initialPosition.y.value = y;
-			}
-		} )
-		.onTouchesMove( ( event, state ) => {
-			if ( ! isPanActive.value && isDragging.value ) {
+				initialPosition.current.x.value = x;
+				initialPosition.current.y.value = y;
 				isPanActive.value = true;
-				state.activate();
-			}
+			} )
+			.onUpdate( ( event ) => {
+				const { x = 0, y = 0 } = event;
 
-			if ( isPanActive.value && isDragging.value ) {
-				const firstEvent = getFirstTouchEvent( event );
-
-				if ( ! firstEvent ) {
-					state.end();
-					return;
-				}
-
-				lastPosition.x.value = firstEvent.x;
-				lastPosition.y.value = firstEvent.y;
+				lastPosition.current.x.value = x;
+				lastPosition.current.y.value = y;
 
 				if ( onDragOver ) {
-					onDragOver( firstEvent );
+					onDragOver( { x, y } );
 				}
-			}
-		} )
-		.onTouchesCancelled( ( _event, state ) => {
-			state.end();
-		} )
-		.onEnd( () => {
-			currentFirstTouchId.value = null;
-			isPanActive.value = false;
-			isDragging.value = false;
-		} )
-		.withRef( panGestureRef )
-		.shouldCancelWhenOutside( false )
-		.withTestId( testID );
+			} )
+
+			.onEnd( () => {
+				isPanActive.value = false;
+				isDragging.value = false;
+			} )
+			.withRef( panGestureRef )
+			.shouldCancelWhenOutside( false )
+			.withTestId( testID );
+	}, [
+		initialPosition,
+		isPanActive,
+		lastPosition,
+		onDragOver,
+		isDragging,
+		panGestureRef,
+		testID,
+		minDuration,
+	] );
 
 	const providerValue = useMemo( () => {
 		return { panGestureRef, isDragging, isPanActive, draggingId };
@@ -192,28 +195,31 @@ const DraggableTrigger = ( {
 	const { panGestureRef, isDragging, isPanActive, draggingId } =
 		useContext( Context );
 
-	const gestureHandler = useAnimatedGestureHandler( {
-		onActive: () => {
-			if ( isDragging.value ) {
-				return;
-			}
+	const gestureHandler = useAnimatedGestureHandler(
+		{
+			onActive: () => {
+				if ( isDragging.value ) {
+					return;
+				}
 
-			draggingId.value = id;
-			isDragging.value = true;
-			if ( onLongPress ) {
-				runOnJS( onLongPress )( id );
-			}
-		},
-		onEnd: () => {
-			if ( ! isPanActive.value ) {
-				isDragging.value = false;
-			}
+				draggingId.value = id;
+				isDragging.value = true;
+				if ( onLongPress ) {
+					runOnJS( onLongPress )( id );
+				}
+			},
+			onEnd: () => {
+				if ( ! isPanActive.value ) {
+					isDragging.value = false;
+				}
 
-			if ( onLongPressEnd ) {
-				runOnJS( onLongPressEnd )( id );
-			}
+				if ( onLongPressEnd ) {
+					runOnJS( onLongPressEnd )( id );
+				}
+			},
 		},
-	} );
+		[ draggingId, isDragging, onLongPress, onLongPressEnd ]
+	);
 
 	return (
 		<LongPressGestureHandler

@@ -3,6 +3,7 @@
  */
 import { cloneBlock } from '@wordpress/blocks';
 import { useDispatch, useSelect } from '@wordpress/data';
+import { useMemo } from '@wordpress/element';
 
 /**
  * Internal dependencies
@@ -105,11 +106,22 @@ export default function useOnBlockDrop() {
 	const { insertBlocks, moveBlocksToPosition, clearSelectedBlock } =
 		useDispatch( blockEditorStore );
 
-	return onBlockDrop(
+	const onBlockDropCallback = useMemo( () => {
+		return onBlockDrop(
+			getBlockIndex,
+			getClientIdsOfDescendants,
+			moveBlocksToPosition,
+			insertBlocks,
+			clearSelectedBlock
+		);
+	}, [
+		onBlockDrop,
 		getBlockIndex,
 		getClientIdsOfDescendants,
 		moveBlocksToPosition,
 		insertBlocks,
-		clearSelectedBlock
-	);
+		clearSelectedBlock,
+	] );
+
+	return onBlockDropCallback;
 }

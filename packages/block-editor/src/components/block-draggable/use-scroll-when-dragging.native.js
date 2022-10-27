@@ -14,6 +14,11 @@ import {
 } from 'react-native-reanimated';
 
 /**
+ * WordPress dependencies
+ */
+import { useCallback, useRef } from '@wordpress/element';
+
+/**
  * Internal dependencies
  */
 import { useBlockListContext } from '../block-list/block-list-context';
@@ -45,30 +50,34 @@ export default function useScrollWhenDragging() {
 	const isAnimationTimerActive = useSharedValue( false );
 	const isScrollActive = useSharedValue( false );
 
-	const scroll = {
+	const scroll = useRef( {
 		offsetY: useSharedValue( 0 ),
 		maxOffsetY: useSharedValue( 0 ),
-	};
-	const scrollHandler = ( event ) => {
-		'worklet';
-		const { contentSize, contentOffset, layoutMeasurement } = event;
-		scroll.offsetY.value = contentOffset.y;
-		scroll.maxOffsetY.value = contentSize.height - layoutMeasurement.height;
-	};
+	} );
+	const scrollHandler = useCallback(
+		( event ) => {
+			'worklet';
+			const { contentSize, contentOffset, layoutMeasurement } = event;
+			scroll.current.offsetY.value = contentOffset.y;
+			scroll.current.maxOffsetY.value =
+				contentSize.height - layoutMeasurement.height;
+		},
+		[ scroll ]
+	);
 
-	const stopScrolling = () => {
+	const stopScrolling = useCallback( () => {
 		'worklet';
 		cancelAnimation( animationTimer );
 
 		isAnimationTimerActive.value = false;
 		isScrollActive.value = false;
 		velocityY.value = 0;
-	};
+	}, [ animationTimer, isAnimationTimerActive, isScrollActive, velocityY ] );
 
 	const startScrolling = ( y ) => {
 		'worklet';
 		stopScrolling();
-		offsetY.value = scroll.offsetY.value;
+		offsetY.value = scroll.current.offsetY.value;
 		dragStartY.value = y;
 
 		animationTimer.value = 0;
@@ -83,26 +92,36 @@ export default function useScrollWhenDragging() {
 		isAnimationTimerActive.value = true;
 	};
 
-	const scrollOnDragOver = ( y ) => {
-		'worklet';
-		const dragDistance = Math.max(
-			Math.abs( y - dragStartY.value ) - SCROLL_INACTIVE_DISTANCE_PX,
-			0
-		);
-		const distancePercentage = dragDistance / windowHeight;
+	const scrollOnDragOver = useCallback(
+		( y ) => {
+			'worklet';
+			const dragDistance = Math.max(
+				Math.abs( y - dragStartY.value ) - SCROLL_INACTIVE_DISTANCE_PX,
+				0
+			);
+			const distancePercentage = dragDistance / windowHeight;
 
-		if ( ! isScrollActive.value ) {
-			isScrollActive.value = dragDistance > 0;
-		} else if ( y > dragStartY.value ) {
-			// User is dragging downwards.
-			velocityY.value = VELOCITY_MULTIPLIER * distancePercentage;
-		} else if ( y < dragStartY.value ) {
-			// User is dragging upwards.
-			velocityY.value = -VELOCITY_MULTIPLIER * distancePercentage;
-		} else {
-			velocityY.value = 0;
-		}
-	};
+			if ( ! isScrollActive.value ) {
+				isScrollActive.value = dragDistance > 0;
+			} else if ( y > dragStartY.value ) {
+				// User is dragging downwards.
+				velocityY.value = VELOCITY_MULTIPLIER * distancePercentage;
+			} else if ( y < dragStartY.value ) {
+				// User is dragging upwards.
+				velocityY.value = -VELOCITY_MULTIPLIER * distancePercentage;
+			} else {
+				velocityY.value = 0;
+			}
+		},
+		[
+			dragStartY,
+			SCROLL_INACTIVE_DISTANCE_PX,
+			VELOCITY_MULTIPLIER,
+			windowHeight,
+			isScrollActive,
+			velocityY,
+		]
+	);
 
 	useAnimatedReaction(
 		() => animationTimer.value,
@@ -114,10 +133,10 @@ export default function useScrollWhenDragging() {
 			const delta = Math.abs( value - previous );
 			let newOffset = offsetY.value + delta * velocityY.value;
 
-			if ( scroll.maxOffsetY.value !== 0 ) {
+			if ( scroll.current.maxOffsetY.value !== 0 ) {
 				newOffset = Math.max(
 					0,
-					Math.min( scroll.maxOffsetY.value, newOffset )
+					Math.min( scroll.current.maxOffsetY.value, newOffset )
 				);
 			} else {
 				// Scroll values are empty until receiving the first scroll event.
@@ -128,7 +147,8 @@ export default function useScrollWhenDragging() {
 
 			offsetY.value = newOffset;
 			scrollTo( animatedScrollRef, 0, offsetY.value, false );
-		}
+		},
+		[ offsetY, velocityY, scroll ]
 	);
 
 	return [ startScrolling, scrollOnDragOver, stopScrolling, scrollHandler ];
