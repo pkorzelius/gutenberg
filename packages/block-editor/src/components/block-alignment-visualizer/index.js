@@ -8,12 +8,14 @@ import classnames from 'classnames';
  */
 import { getBlockSupport, hasBlockSupport } from '@wordpress/blocks';
 import { Popover } from '@wordpress/components';
+import { useRefEffect } from '@wordpress/compose';
 import { useSelect } from '@wordpress/data';
 import {
 	createPortal,
 	useContext,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -27,6 +29,14 @@ import { __unstableUseBlockElement as useBlockElement } from '../block-list/use-
 import useAvailableAlignments from '../block-alignment-control/use-available-alignments';
 import { store as blockEditorStore } from '../../store';
 import { getValidAlignments } from '../../hooks/align';
+
+function getCSSPropertyValue( element, property ) {
+	if ( ! element ) return;
+
+	return element.ownerDocument.defaultView
+		.getComputedStyle( element )
+		.getPropertyValue( property );
+}
 
 export default function BlockAlignmentVisualizer( {
 	allowedAlignments,
@@ -146,12 +156,15 @@ export default function BlockAlignmentVisualizer( {
 			.filter( ( alignment ) => alignment !== null );
 	}, [ availableAlignments, layout ] );
 
+	const popoverRef = useRef();
+
 	if ( availableAlignments?.length === 0 ) {
 		return null;
 	}
 
 	return (
 		<Popover
+			ref={ popoverRef }
 			anchor={ popoverAnchor }
 			placement="top-start"
 			animate={ false }
@@ -166,19 +179,27 @@ export default function BlockAlignmentVisualizer( {
 				<head>
 					<style>
 						{ `
-							html {
-								overflow: hidden;
-								width: 100%;
-								height: 100%;
+							:root {
+								--wp-admin-theme-color: ${ getCSSPropertyValue(
+									popoverRef.current,
+									'--wp-admin-theme-color'
+								) }
 							}
 
-							body {
+							html {
+								overflow: hidden;
+							}
+
+							body::before {
+								content: "";
 								position: absolute;
-								margin: 0;
 								top: 0;
-								left: 0;
 								right: 0;
 								bottom: 0;
+								left: 0;
+								pointer-events: none !important;
+								background-color: var(--wp-admin-theme-color);
+								opacity: 0.1;
 							}
 
 							.block-editor__alignment-visualizer-step {
@@ -195,8 +216,8 @@ export default function BlockAlignmentVisualizer( {
 								max-width: 100%;
 								margin: 0 auto;
 								opacity: 0.7;
-								border-left: solid 2px blue;
-								border-right: solid 2px blue;
+								border-left: solid 2px var(--wp-admin-theme-color);
+								border-right: solid 2px var(--wp-admin-theme-color);
 							}
 						` }
 					</style>
@@ -243,12 +264,34 @@ export default function BlockAlignmentVisualizer( {
 }
 
 function Iframe( { children, ...props } ) {
-	const [ ref, setRef ] = useState( null );
-	const iframeDocument = ref?.contentDocument?.documentElement;
+	const [ iframeDocument, setIframeDocument ] = useState( null );
+
+	const ref = useRefEffect( ( node ) => {
+		function setDocumentIfReady() {
+			const contentDocument = node?.contentDocument;
+			const documentElement = contentDocument?.documentElement;
+			const readyState = contentDocument?.readyState;
+
+			if ( readyState !== 'interactive' && readyState !== 'complete' ) {
+				return;
+			}
+
+			documentElement.removeChild( contentDocument.head );
+			documentElement.removeChild( contentDocument.body );
+			setIframeDocument( documentElement );
+		}
+
+		node.addEventListener( 'load', setDocumentIfReady );
+
+		return () => {
+			node.removeEventListener( 'load', setDocumentIfReady );
+			setIframeDocument( null );
+		};
+	}, [] );
 
 	return (
 		<iframe
-			ref={ setRef }
+			ref={ ref }
 			// Correct doctype is required to enable rendering in standards mode
 			srcDoc="<!doctype html>"
 			title={ __( 'Alignment visualizer' ) }
