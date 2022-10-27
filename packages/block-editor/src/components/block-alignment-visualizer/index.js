@@ -229,37 +229,51 @@ export default function BlockAlignmentVisualizer( {
 				</head>
 				<body className="editor-styles-wrapper">
 					{ alignments.map( ( alignment ) => (
-						<div
+						<BlockAlignmentVisualizerStep
 							key={ alignment.name }
-							className={ classnames(
-								'block-editor__alignment-visualizer-step',
-								{
-									[ `is-content-justification-${ layout.justifyContent }` ]:
-										layout.justifyContent,
-								}
-							) }
-						>
-							<div
-								className={ classnames(
-									'block-editor__alignment-visualizer-step-inner',
-									alignment.className
-								) }
-							>
-								<Popover
-									className="block-editor__alignment-visualizer-step-label-popover"
-									placement="top-end"
-									flip
-								>
-									<div className="block-editor__alignment-visualizer-step-label">
-										{ alignment.label }
-									</div>
-								</Popover>
-							</div>
-						</div>
+							alignment={ alignment }
+							justification={ layout.justifyContent }
+						/>
 					) ) }
 				</body>
 			</Iframe>
 		</Popover>
+	);
+}
+
+function BlockAlignmentVisualizerStep( { alignment, justification } ) {
+	const [ popoverAnchor, setPopoverAnchor ] = useState( null );
+
+	return (
+		<>
+			<div
+				className={ classnames(
+					'block-editor__alignment-visualizer-step',
+					{
+						[ `is-content-justification-${ justification }` ]:
+							justification,
+					}
+				) }
+			>
+				<div
+					className={ classnames(
+						'block-editor__alignment-visualizer-step-inner',
+						alignment.className
+					) }
+					ref={ setPopoverAnchor }
+				/>
+			</div>
+			<Popover
+				anchor={ popoverAnchor }
+				className="block-editor__alignment-visualizer-step-label-popover"
+				placement="top-end"
+				flip
+			>
+				<div className="block-editor__alignment-visualizer-step-label">
+					{ alignment.label }
+				</div>
+			</Popover>
+		</>
 	);
 }
 
