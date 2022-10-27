@@ -305,7 +305,7 @@ function gutenberg_get_classnames_from_last_tag( $html ) {
 		$last_classnames = $tags->get_attribute( 'class' );
 	}
 
-	return $last_classnames;
+	return (string) $last_classnames;
 }
 
 /**
@@ -445,7 +445,7 @@ function gutenberg_render_layout_support_flag( $block_content, $block ) {
 		$content->add_class( implode( ' ', $class_names ) );
 	}
 
-	return $content;
+	return (string) $content;
 }
 
 // Register the block support. (overrides core one).
@@ -559,7 +559,7 @@ function gutenberg_render_layout_position_support( $block_content, $block ) {
 		$content = new WP_HTML_Tag_Processor( $block_content );
 		$content->next_tag();
 		$content->add_class( $class_name );
-		return $content;
+		return (string) $content;
 	}
 	return $block_content;
 }
