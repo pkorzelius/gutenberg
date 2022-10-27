@@ -17,7 +17,7 @@ import {
 import { getBlockTypes, unregisterBlockType } from '@wordpress/blocks';
 import { registerCoreBlocks } from '@wordpress/block-library';
 
-const NESTED_GROUP_BLOCK = `<!-- wp:group {"layout":{"type":"constrained","isDefault":true}} -->
+const NESTED_GROUP_BLOCK = `<!-- wp:group {"layout":{"type":"constrained"}} -->
 <div class="wp-block-group"><!-- wp:image -->
 <figure class="wp-block-image"><img alt=""/></figure>
 <!-- /wp:image -->
